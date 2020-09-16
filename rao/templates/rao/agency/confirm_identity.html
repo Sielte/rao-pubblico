@@ -1,0 +1,224 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+    <main>
+        <div class="container my-4">
+            <div id="accordionDiv1" class="collapse-div" role="tablist">
+
+                <div class="collapse-header" id="headingA1">
+                    <button data-toggle="collapse" data-target="#accordion1" aria-expanded="true"
+                            aria-controls="accordion1">
+                        Anagrafica*
+                    </button>
+                </div>
+                <div id="accordion1" class="collapse show" role="tabpanel" aria-labelledby="headingA1"
+                     data-parent="#accordionDiv1">
+                    <div class="collapse-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="formName"
+                                       placeholder="Nome" disabled>
+                            </div>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="formSurname"
+                                       placeholder="Cognome" disabled>
+                            </div>
+
+                        </div>
+
+                        <div class="row pt-5">
+                            <div class="col-lg-8">
+                                <input type="text" class="form-control" id="formFiscalCode"
+                                       placeholder="Codice fiscale" disabled>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="bootstrap-select-wrapper">
+                                    <select title="Sesso" disabled>
+                                        <option value="Value 1">Maschio</option>
+                                        <option value="Value 2">Femmina</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="row pt-5">
+                            <div class="col-lg-4">
+                                <div class="it-datepicker-wrapper">
+                                    <div class="form-group">
+                                        <label for="date1"></label>
+                                        <input class="form-control it-date-datepicker" id="date1" type="text"
+                                               placeholder="Data di nascita" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <input type="text" class="form-control" id="formPlace"
+                                       placeholder="Luogo di nascita" disabled>
+                            </div>
+                            <div class="col-lg-4">
+                                <input type="text" class="form-control" id="formProvince"
+                                       placeholder="Provincia di nascita" disabled>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div class="collapse-header" id="headingA2">
+                    <button data-toggle="collapse" data-target="#accordion2" aria-expanded="false"
+                            aria-controls="accordion2">
+                        Recapiti e indirizzi*
+                    </button>
+                </div>
+                <div id="accordion2" class="collapse" role="tabpanel" aria-labelledby="headingA2"
+                     data-parent="#accordionDiv1">
+                    <div class="collapse-body">
+
+                        <div class="row">
+                            <h4><span>Recapiti</span></h4>
+                        </div>
+
+                        <div class="row pt-1">
+                            <div class="col-lg-6">
+                                <input type="email" class="form-control" id="formEmail"
+                                       placeholder="Indirizzo email" disabled>
+                            </div>
+                            <div class="col-lg-6">
+                                <input type="tel" class="form-control" id="formTelephone"
+                                       placeholder="Numero di cellulare" disabled>
+                            </div>
+                        </div>
+
+                        <div class="row pt-5">
+
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="formPEC"
+                                       placeholder="Indirizzo PEC (Opzionale)" disabled>
+                            </div>
+                            <div class="col-lg-6">
+                                <input type="tel" class="form-control" id="formHomePhone"
+                                       placeholder="Numero telefono fisso (Opzionale)" disabled>
+                            </div>
+                        </div>
+                        <div class="row pt-5">
+                            <h4><span>Domicilio</span></h4>
+                        </div>
+
+                        <div class="row pt-1">
+                            <div class="col-lg-2">
+                                <div class="bootstrap-select-wrapper">
+                                    <select title="Tipo" disabled>
+                                        <option value="Value 1">Via</option>
+                                        <option value="Value 2">Piazza</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <input type="text" class="form-control" id="formAddress"
+                                       placeholder="Indirizzo domicilio" disabled>
+                            </div>
+                            <div class="col-lg-2">
+                                <input type="text" class="form-control" id="formCivico"
+                                       placeholder="Numero civico" disabled>
+                            </div>
+                        </div>
+                        <div class="row pt-5">
+                            <div class="col-lg-2">
+                                <input type="text" class="form-control" id="formCap"
+                                       placeholder="CAP" disabled>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="bootstrap-select-wrapper">
+                                    <select title="Provincia/Stato Estero" disabled>
+                                        <option value="Value 1">Opzione 1</option>
+                                        <option value="Value 2">Opzione 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="bootstrap-select-wrapper">
+                                    <select title="Luogo" disabled>
+                                        <option value="Value 1">Opzione 1</option>
+                                        <option value="Value 2">Opzione 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div class="collapse-header" id="headingA3">
+                    <button data-toggle="collapse" data-target="#accordion3" aria-expanded="false"
+                            aria-controls="accordion3">
+                        Documenti*
+                    </button>
+                </div>
+                <div id="accordion3" class="collapse" role="tabpanel" aria-labelledby="headingA3"
+                     data-parent="#accordionDiv1">
+                    <div class="collapse-body">
+                        <div class="row">
+                            <div class="col-lg-2">
+                                <div class="bootstrap-select-wrapper">
+                                    <select title="Tipo" disabled>
+                                        <option value="Value 1">Carta d'Identit&aacute;</option>
+                                        <option value="Value 2">Patente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <input type="text" class="form-control" id="docNumber"
+                                       placeholder="Inserisci il numero del tuo documento" disabled>
+                            </div>
+                            <div class="col-lg-5">
+                                <input type="text" class="form-control" id="docRelease"
+                                       placeholder="Rilasciato da" disabled>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <label for="releaseDate"></label>
+                                <div class="it-datepicker-wrapper" disabled>
+                                    <div class="form-group">
+                                        <input class="form-control it-date-datepicker" id="releaseDate" type="text"
+                                               placeholder="Data rilascio" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="expirationDate"></label>
+                                <div class="it-datepicker-wrapper">
+                                    <div class="form-group">
+                                        <input class="form-control it-date-datepicker" id="expirationDate" type="text"
+                                               placeholder="Data scadenza" disabled>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 pb-5">
+                <div class="float-left">
+                    <button type="button" class="btn btn-primary ">Modifica</button>
+                </div>
+                <div class="float-right">
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+{% block bl_javascripts %}
+    <script>
+
+    </script>
+{% endblock %}

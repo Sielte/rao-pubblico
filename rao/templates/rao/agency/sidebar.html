@@ -1,0 +1,62 @@
+{% load staticfiles %}
+{% url "agency:dashboard" token as dashboard_link %}
+{% url "agency:appointments" token as appointments_link %}
+{% url "agency:list_identity" 1 token as list_identity_link %}
+{% url "agency:add_identity" token as add_identity_link %}
+{% url "agency:setup" as setup_link %}
+{% url "agency:add_operator" token as add_operator_link %}
+{% url "agency:list_operator" 1 token as list_operator_link %}
+{% url "agency:admin_setup" token as admin_setup_link %}
+
+<div class="sidebar-wrapper">
+    <div class="sidebar-linklist-wrapper">
+        <div class="link-list-wrapper">
+            <ul class="link-list">
+                {% if params.is_admin %}
+                <li><a class="list-item large medium {% if request.path == dashboard_link %}active{% endif %}"
+                       href="{{ dashboard_link }}"><span>Dashboard </span></a></li>
+
+
+                {% endif %}
+                <li>
+                    <a class="list-item large medium right-icon {% if request.path == appointments_link or request.path == list_identity_link or request.path == add_identity_link %}active{% endif %}"
+                       href="#collapseFour" data-toggle="collapse"
+                       aria-expanded="{% if request.path == appointments_link or request.path == list_identity_link or request.path == add_identity_link %}true{% else %}false{% endif %}"
+                       aria-controls="collapseFour"><span>Identit&aacute; </span>
+                        <svg class="icon icon-sm icon-primary right" aria-hidden="true">
+                            <use xlink:href="{% static "rao/agency/svg/sprite.svg" %}#it-expand"></use>
+                        </svg>
+                    </a>
+                    <ul class="link-sublist collapse {% if request.path == appointments_link or request.path == list_identity_link or request.path == add_identity_link %}show{% endif %}"
+                        id="collapseFour">
+                        <li><a class="list-item {% if request.path == list_identity_link %}active{% endif %}"
+                               href="{{ list_identity_link }}"><span>Lista richieste </span></a></li>
+                        {% if not params.is_admin %}
+                        <li><a class="list-item {% if request.path == add_identity_link %}active{% endif %}"
+                               href="{{ add_identity_link }}"><span>Nuova richiesta </span></a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% if params.is_admin %}
+                <li>
+                    <a class="list-item large medium right-icon" href="#collapseFive" data-toggle="collapse"
+                       aria-expanded="{% if request.path == list_operator_link or request.path == add_operator_link %}true{% else %}false{% endif %}" aria-controls="collapseFive"><span>Operatori </span>
+                        <svg class="icon icon-sm icon-primary right" aria-hidden="true">
+                            <use xlink:href="{% static "rao/agency/svg/sprite.svg" %}#it-expand"></use>
+                        </svg>
+                    </a>
+                    <ul class="link-sublist collapse {% if request.path == list_operator_link or request.path == add_operator_link %}show{% endif %}" id="collapseFive">
+                        <li><a class="list-item {% if request.path == list_operator_link %}active{% endif %}"
+                               href="{{ list_operator_link }}"><span>Lista operatori </span></a></li>
+                        <li><a class="list-item {% if request.path == add_operator_link %}active{% endif %}"
+                               href="{{ add_operator_link }}"><span>Nuovo operatore </span></a></li>
+                    </ul>
+                </li>
+                <li><a class="list-item large medium {% if request.path == admin_setup_link %}active{% endif %}"
+                       href="{{ admin_setup_link }}"><span>Impostazioni </span></a></li>
+
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>

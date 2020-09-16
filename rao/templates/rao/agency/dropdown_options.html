@@ -1,0 +1,3 @@
+{% for element in list %}
+<option value="{{ element.code }}"> {% if municipality %} {{ element.code }} - {% endif %} {{ element.name }}</option>
+{% endfor %}

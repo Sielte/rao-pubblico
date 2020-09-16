@@ -1,0 +1,182 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+<main>
+    <div class="container my-4">
+        <div class="float-left mt-2 mb-2">
+            <h3 class="text-center text-primary">Configurazione R.A.O.</h3>
+        </div>
+        <form action="{% url 'agency:admin_setup' token %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="accordionDiv1" class="collapse-div" role="tablist">
+
+                <div class="collapse-header" id="headingA1">
+                    <button type="button" data-toggle="collapse" data-target="#accordion1" aria-expanded="true"
+                            aria-controls="accordion1">
+                        Sistema di Firma
+                    </button>
+                </div>
+                <div id="accordion1" class="collapse show " role="tabpanel" aria-labelledby="headingA1">
+                    <div class="collapse-body ">
+                        <div class="row d-flex justify-content-center">
+                            <label class="custom-file-label" > Carica il file (certificato) .pem che ti è stato fornito.
+                            </label>
+                        </div>
+
+                        <div class="row d-flex justify-content-center" >
+                            {{ form_cert.uploadCertificate }}
+                        </div>
+                        <div class="row d-flex justify-content-center" >
+                            <small id="uploadCertificate"
+                                   class="form-text text-danger">{{ form_cert.uploadCertificate.errors }}</small>
+                        </div>
+                            <div class="pt-2 d-flex justify-content-center ">
+
+                                <p >Inserisci il PIN del tuo sistema di Firma:</p>
+                            </div>
+                        <div class="row d-flex justify-content-center">
+                            <div class="input-group col-6 col-md-4">
+
+                                <input type="password" autocomplete="PIN"
+                                       class="form-control col-12 input-password" id="pinField"
+                                       oncopy="return false" onpaste="return false"
+                                       name="pinField" aria-describedby="PINHelp"
+                                       placeholder="PIN di conferma">
+                                <div class="input-group-append password-icon"
+                                     title="Mostra/Nascondi PIN">
+                                    <svg class="password-icon-visible icon icon-sm">
+                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                    </svg>
+                                    <svg class="password-icon-invisible icon icon-sm d-none">
+                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                    </svg>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="row d-flex justify-content-center pt-5 pb-5">
+                            <input class="btn btn-primary col-sm-4 col-10" type="submit" value="Aggiorna Certificato" name="update_cert">
+                        </div>
+                    </div>
+
+
+
+
+
+                </div>
+            </div>
+
+        </form>
+
+        <div class="collapse-header" id="headingA2">
+            <button type="button" data-toggle="collapse" data-target="#accordion2"
+                    aria-expanded="false"
+                    aria-controls="accordion2">
+                Configurazione email SMTP
+            </button>
+        </div>
+        <form action="{% url 'agency:admin_setup' token %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="accordion2" class="collapse show" role="tabpanel" aria-labelledby="headingA2">
+                <div class="collapse-body">
+                    <div class="form-row ">
+                        <div class="form-group col-lg-12">
+                            <input type="text" class="form-control" id="smtpMailFromField"
+                                   name="smtpMailFromField"
+                                   aria-describedby="smtpMailFromFieldHelp" {% if form_email.smtpMailFromField.value %}
+                                   value="{{ form_email.smtpMailFromField.value }}"{% else %} value="{{ params.rao.email }} "   {% endif %} placeholder="Comune di Catania <indirizzo@mail.it>">
+                            <label for="smtpMailFromField">Da*</label>
+                            <small id="smtpMailFromFieldHelp"
+                                   class="form-text text-danger"> {{ form_email.smtpMailFromField.errors }} </small>
+                        </div>
+                    </div>
+                    <div class="form-row ">
+                        <div class="form-group col-lg-6">
+                            <input type="text" class="form-control" id="emailRAOField"
+                                   name="emailRAOField"
+                                   aria-describedby="emailRAOFieldHelp" {% if form_email.emailRAOField.value %}
+                                   value="{{ form_email.emailRAOField.value }}"{% else %} value="{{ params.rao.username }} " {% endif %}>
+                            <label for="emailRAOField">Username*</label>
+                            <small id="emailRAOFieldHelp"
+                                   class="form-text  text-danger"> {{ form_email.emailRAOField.errors }} </small>
+                        </div>
+                        <div class="form-group col-lg-6">
+                            <div class="input-group">
+                                <input type="password" autocomplete="new-password"
+                                       class="form-control col-12 input-password"
+                                       id="pwdRAOField" name="pwdRAOField"
+                                       aria-describedby="pwdRAOFieldHelp">
+                                <label for="pwdRAOField">Password*</label>
+                                <span class="password-icon " aria-hidden="true">
+                                                <svg class="password-icon-visible icon icon-sm"><use
+                                                        xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use></svg>
+                                                <svg class="password-icon-invisible icon icon-sm d-none"><use
+                                                        xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use></svg>
+                                            </span>
+                            </div>
+                            <small id="pwdRAOFieldHelp"
+                                   class="form-text text-danger">{{ form_email.pwdRAOField.errors }}</small>
+                        </div>
+                    </div>
+                    <div class="form-row ">
+                        <div class="form-group col-lg-6">
+                            <input type="text" class="form-control" id="hostField"
+                                   name="hostField"
+                                   aria-describedby="hostFieldHelp" {% if form_email.hostField.value %}
+                                   value="{{ form_email.hostField.value }}" {% else %} value="{{ params.rao.host }} " {% endif %}>
+                            <label for="hostField">Host Posta in Uscita (SMTP)*</label>
+                            <small id="hostFieldHelp"
+                                   class="form-text  text-danger"> {{ form.hostField.errors }} </small>
+                        </div>
+                        <div class="form-group col-lg-3">
+                            <input type="text" class="form-control" id="emailPortField"
+                                   name="emailPortField"
+                                   aria-describedby="emailPortFieldHelp" {% if form_email.emailPortField.value %}
+                                   value="{{ form_email.emailPortField.value }}" {% else %} value="{{ params.rao.port }} "  {% endif %}>
+                            <label for="emailPortField">Porta in Uscita (SMTP)*</label>
+                            <small id="emailPortFieldHelp"
+                                   class="form-text  text-danger"> {{ form_email.emailPortField.errors }} </small>
+                        </div>
+                        <div class="form-group col-lg-3">
+                            <div class="bootstrap-select-wrapper">
+                                <select id="cryptoMailField" name="cryptoMailField" title="Crittografia*" aria-describedby="cryptoMailFieldHelp">
+                                    <option {% if params.rao.crypto == 'NESSUNA' %} selected {% endif %} value="NESSUNA">
+                                    NESSUNA
+                                    </option>
+                                    <option {% if  params.rao.crypto == 'TLS' %} selected {% endif %} value="TLS">
+                                    TLS
+                                    </option>
+                                    <option {% if  params.rao.crypto == 'SSL' %} selected {% endif %} value="SSL">
+                                    SSL
+                                    </option>
+
+                                </select>
+
+                                <small id="cryptoMailFieldHelp"
+                                       class="form-text  text-danger">{{ form_email.cryptoMailField.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row d-flex justify-content-center pb-5">
+                        <button type="submit" class="btn btn-primary col-sm-4 col-10" title="Aggiorna">Aggiorna dati
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </form>
+    </div>
+</main>
+{% endblock %}
+
+{% block bl_javascripts %}
+<script>
+$(".upload").on("change", function() {
+  var fileName = $(this).val();
+  $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "rao/agency/base.html" %}
+
+
+{% load staticfiles %}
+
+{% block page-content %}
+
+
+<div class="mx-change-pass-modal">
+    <div class="modal alert-modal" tabindex="-1" role="dialog" id="login-modal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <svg class="icon">
+                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                    </svg>
+                    <h5 class="modal-title" id="change_title_modal">
+                    </h5>
+                </div>
+                <div class="modal-body mb-5">
+                    <p id="change_text_modal"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal">Ok
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="section section-muted bg-white">
+    <div class="section-content mx-auto col-12 col-sm-10">
+        {% if installation == True %}
+        <div class="alert alert-success w-75" role="alert">
+            Installazione eseguita con successo!
+        </div>
+        {% endif %}
+        <div class="card-deck">
+            <div class="card shadow border-0 bg-primary">
+                <div class="row d-flex justify-content-center">
+                    <div class=" pt-5 pl-5 pr-5">
+                        <h4 class="text-white">Benvenuto!</h4>
+                        <p class="text-white">Effettua l'accesso inserendo le tue credenziali.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <form action="{% url 'agency:login' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="card-body ">
+                            <div class="form-row col-sm-6 mx-auto">
+                                <div class="col-12 ">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">
+                                                <svg class="icon icon-sm icon-primary">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-user"></use>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <input type="text" class="form-control col-12" id="usernameField" autocomplete="0"
+                                               name="usernameField" aria-describedby="usernameHelp"
+                                               placeholder="Username">
+                                    </div>
+
+                                    <small id="usernameHelp"
+                                           class="form-text text-danger">{{ form.usernameField.errors }}</small>
+                                </div>
+                            </div>
+
+                            <div class="row pt-4 col-sm-6 mx-auto">
+                                <div class="form-group col-12">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text ">
+                                                <svg class="icon icon-sm icon-primary">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <input type="password" autocomplete="new-password"
+                                               class="form-control col-12 input-password" id="passwordField"
+                                               name="passwordField" aria-describedby="passwordHelp"
+                                               placeholder="Password">
+                                        <div class="input-group-append password-icon"
+                                             title="Mostra/Nascondi password">
+                                            <svg class="password-icon-visible icon icon-sm">
+                                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                            </svg>
+                                            <svg class="password-icon-invisible icon icon-sm d-none">
+                                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <small id="passwordHelp"
+                                           class="form-text text-danger">{{ form.passwordField.errors }}</small>
+                                    {% if form.passwordField.errors %}
+                                    <br>
+                                    {% endif %}
+                                    <a href="{% url 'agency:recovery_password' %}" class="text-white">Hai
+                                    dimenticato la password?</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row pt-2 d-flex justify-content-center">
+                            <button type="submit" class="btn btn-white text-primary col-sm-4 col-10 " title="Login">
+                                Accedi
+                            </button>
+                        </div>
+
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block bl_javascripts %}
+<script>
+        {% if request.session.setup_ok %}
+            document.getElementById("change_title_modal").innerHTML = "Configurazione completata";
+            document.getElementById("change_text_modal").innerHTML = "Configurazione completata con successo";
+            $('#login-modal').modal('show')
+
+        {% elif request.session.pinChanged %}
+            document.getElementById("change_title_modal").innerHTML = "PIN modificato";
+            document.getElementById("change_text_modal").innerHTML = "PIN impostato correttamente";
+            $('#login-modal').modal('show')
+
+        {% elif request.session.passwordChanged %}
+            document.getElementById("change_title_modal").innerHTML = "Password modificata";
+            document.getElementById("change_text_modal").innerHTML = "Password modificata con successo";
+            $('#login-modal').modal('show')
+
+        {% endif %}
+
+        {% if request.session.setup_ok %}
+            del_key('setup_ok');
+            del_key('pinChanged');
+            del_key('passwordChanged');
+        {% endif %}
+        {% if request.session.pinChanged %}
+            del_key('pinChanged');
+            del_key('passwordChanged');
+        {% endif %}
+        {% if request.session.passwordChanged %}
+            del_key('passwordChanged');
+        {% endif %}
+
+
+    function del_key(key_name) {
+
+        $.ajax({
+                url: '/agency/ajax_delete_session_key/',
+                data: {
+                    'key_name': key_name
+                },
+                success: function (data) {
+                    }
+        });
+
+
+
+
+    }
+
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+<main>
+    <div class="container my-4">
+        <h3 class="text-primary">Richiesta completata</h3>
+
+        <div class="row pt-3">
+            <h6 class="pr-1">La richiesta di identit&aacute;{% if params.identity.name %} di {% endif %}</h6>
+            {% if params.identity.name %}<h6 class="text-primary pr-1"> {{ params.identity.name }} {{ params.identity.familyName }} </h6>{% endif %}
+            <h6>&eacute; andata a buon fine!</h6>
+        </div>
+
+        <div class="row">
+            <h6>L'utente ricever&aacute; a breve una mail con la seconda met&aacute; della password insieme al file che dovr&aacute; caricare
+                sul sito dell'IdP.</h6>
+        </div>
+        <div class="row">
+            <h6>Stampa la prima met&aacute; della password e consegnala all'utente.</h6>
+        </div>
+        <div class="mb-5">
+            <a target="_blank" href="{% url 'agency:pdf' token %}"  class="mt-5 col-sm-5  btn btn-primary active type='submit'">Stampa</a>
+            <a id="download_pdf" href="{% url 'agency:download_pdf' token %}" ></a>
+        </div>
+    </div>
+
+
+
+</main>
+{% endblock %}
+{% block bl_javascripts %}
+
+<script>
+
+
+$("document").ready(function() {
+    document.getElementById('download_pdf').click();
+});
+</script>
+{% endblock %}

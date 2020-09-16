@@ -1,0 +1,140 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+
+{% block bl_css %}
+    <link rel="stylesheet" href="{% static 'rao/agency/css/Chart.min.css' %}">
+{% endblock %}
+
+{% block page-content %}
+
+
+    <div class="row justify-content-between pt-3">
+        <div class="pl-2">
+            <button onclick="call_ajax(-1);" type="button" class="btn btn-primary">
+                <svg class="icon icon-sm icon-white">
+                    <use xlink:href="{% static "rao/agency/svg/sprite.svg" %}#it-arrow-left"></use>
+                </svg>
+                <span class="sr-only">Settimana precedente</span></button>
+        </div>
+        <div>
+            <button type="button" onclick="call_ajax(1);" class="btn btn-primary">
+                <svg class="icon icon-sm icon-white">
+                    <use xlink:href="{% static "rao/agency/svg/sprite.svg" %}#it-arrow-right"></use>
+                </svg>
+                <span class="sr-only">Settimana successiva</span></button>
+        </div>
+    </div>
+
+    <div class="row pt-3">
+        <div class="col-12 col-sm-4">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">Data</th>
+                        <th scope="col">N° Identificati</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tbody_table">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-12 col-sm-8">
+            <canvas id="graph-linear"></canvas>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block bl_javascripts %}
+    <script src="{% static "rao/agency/js/Chart.min.js" %}"></script>
+    <script src="{% static "rao/agency/js/Chart.bundle.min.js" %}"></script>
+    <script>
+        var ctx = document.getElementById('graph-linear').getContext('2d');
+        var label_list = [{% for report in params.reports %}'{{ report.date }}', {% endfor %}]
+        var data_list = [{% for report in params.reports %} {{ report.num_identified }}, {% endfor %}]
+        var myChart = null;
+
+        function populate_charts(labelList, dataList) {
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelList,
+                    datasets: [{
+                        data: dataList,
+                        backgroundColor: [
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                        ],
+                        borderColor: [
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                            '#06c',
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    legend: false,
+                    title: {
+                        display: false
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+        function populate_table(dateList, numList) {
+            var str_html = "";
+            for (var i = 0; i < dateList.length; i++) {
+                str_html = str_html + "<tr><td>" + dateList[i] + "</td><td>" + numList[i].toString() + "</td></tr>";
+            }
+            $('#tbody_table').html(str_html);
+        }
+
+        var current_week = 0;
+        var url_reports = '{% url 'agency:ajax_reports' %}';
+
+        function call_ajax(week) {
+            current_week = current_week + week
+            $.ajax({
+                url: url_reports,
+                data: {
+                    'week': current_week
+                },
+                success: function (data) {
+                    if (data["statusCode"] === 200) {
+                        myChart.data.labels = data["date"];
+                        myChart.data.datasets[0].data = data["num_identified"];
+                        myChart.update();
+                        populate_table(data["date"], data["num_identified"]);
+                    }
+                },
+                error: function () {
+
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            populate_charts(label_list, data_list);
+            populate_table(label_list, data_list);
+        });
+
+    </script>
+
+{% endblock %}

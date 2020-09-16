@@ -1,0 +1,33 @@
+{% extends "rao/mail/baseMail.html" %}
+
+{% block header_name %}
+    {{ mail_elements.rao_name }}
+{% endblock %}
+
+
+{% block message_title_first %}
+    Gentile {{ mail_elements.nameUser }} {{ mail_elements.familyNameUser }},
+    <br>clicca il link seguente per attivare il tuo account:
+{% endblock %}
+
+
+{% block message %}
+       <a href="{{ activation_link }}" style="color: #0066cc; text-decoration: none;">CLICCA QUI</a>
+{% endblock %}
+
+{% block pin %}
+{% if mail_elements.is_admin == false %}
+Questo &eacute; il tuo pin temporaneo: {{ mail_elements.pin }}.<br>
+Utilizzalo per attivare la tua utenza di Firma.
+{% endif %}
+{% endblock %}
+
+{% block message_title_second %}
+    Ti ricordiamo che &eacute; possibile utilizzare il link solamente una volta.<br>
+{% endblock %}
+
+{% block comune %}
+    {{ mail_elements.rao_name }}
+{% endblock %}
+
+   

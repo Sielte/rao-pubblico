@@ -1,0 +1,164 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+
+{% block page-content %}
+<div class="section section-muted bg-white">
+    <div class="section-content mx-auto col-sm-10">
+        <div class="card-deck">
+            <div class="card shadow border-0 bg-primary">
+                <div class="row">
+                    <div class="mx-auto pt-5">
+                        <h4 class="text-white ml-5">Attivazione Firma</h4>
+                        <p class="text-white ml-5 mr-5">Inserisci il PIN temporaneo fornito in fase di creazione del tuo account
+                            e scegli un nuovo PIN composto da 6 caratteri numerici. Il PIN è personale, ricorda di
+                            conservarlo con cura.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <form action="{% url 'agency:change_pin' token %}" method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="card-body ">
+                            <div class="form-row ">
+                                <div class="col-sm-6 mx-auto">
+                                    <div class="form-group col-12">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text ">
+                                                    <svg class="icon icon-sm icon-primary">
+                                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <input type="password" autocomplete="old-pin"
+                                                   class="form-control col-12 input-password" id="oldPinField"
+                                                   oncopy="return false" onpaste="return false"
+                                                   name="oldPinField" aria-describedby="oldPinHelp"
+                                                   placeholder="PIN temporaneo">
+                                            <div class="input-group-append password-icon"
+                                                 title="Mostra/Nascondi PIN">
+                                                <svg class="password-icon-visible icon icon-sm">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                                </svg>
+                                                <svg class="password-icon-invisible icon icon-sm d-none">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <small id="oldPinHelp"
+                                               class="form-text text-danger">{{ form.oldPinField.errors }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row ">
+                                <div class="col-sm-6 mx-auto">
+                                    <div class="form-group col-12">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text ">
+                                                    <svg class="icon icon-sm icon-primary">
+                                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <input type="password" autocomplete="new-pin"
+                                                   class="form-control col-12 input-password"
+                                                   oncopy="return false" onpaste="return false"
+                                                   id="newPinField" name="newPinField"
+                                                   aria-describedby="newPinHelp"
+                                                   placeholder="Nuovo Pin">
+                                            <div class="input-group-append password-icon"
+                                                 title="Mostra/Nascondi PIN">
+                                                <svg class="password-icon-visible icon icon-sm">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                                </svg>
+                                                <svg class="password-icon-invisible icon icon-sm d-none">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <small id="newPinHelp"
+                                               class="form-text text-danger">{{ form.newPinField.errors }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6 mx-auto">
+                                    <div class="form-group col-12">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text ">
+                                                    <svg class="icon icon-sm icon-primary">
+                                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <input type="password" autocomplete="confirm-pin"
+                                                   class="form-control col-12 input-password"
+                                                   oncopy="return false" onpaste="return false"
+                                                   id="confirmPinField" name="confirmPinField"
+                                                   aria-describedby="confirmPinHelp"
+                                                   placeholder="Conferma Pin">
+                                            <div class="input-group-append password-icon"
+                                                 title="Mostra/Nascondi PIN">
+                                                <svg class="password-icon-visible icon icon-sm">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                                </svg>
+                                                <svg class="password-icon-invisible icon icon-sm d-none">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <small id="confirmPinHelp"
+                                               class="form-text text-danger">{{ form.confirmPinField.errors }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+{% if params.is_admin %}
+                            <div class="row ">
+                                <div class="col-sm-6 mx-auto" >
+                                    <label class="custom-file-label text-white" > Carica il file (certificato) .pem che ti è stato fornito.
+
+
+                                    </label>
+
+                                    {{ form.uploadCertificate }}
+
+                                        <small id="uploadCertificate"
+                                               class="form-text text-danger">{{ form.uploadCertificate.errors }}</small>
+                                </div>
+                            </div>
+                        </div>
+{% endif %}
+
+                        <div class="row d-flex justify-content-center  pt-{% if form.confirmPinField.errors %}4{% else %}2{% endif %} ">
+                            <button type="submit" class="btn btn-white text-primary col-sm-4 col-10"
+                                    title="Cambia PIN">Attiva account
+                            </button>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block bl_javascripts %}
+<script>
+$(".upload").on("change", function() {
+  var fileName = $(this).val();
+  $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+});
+</script>
+
+{% endblock %}

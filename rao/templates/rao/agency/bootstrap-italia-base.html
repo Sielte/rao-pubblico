@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>
+        {% block page_title %}{% endblock page_title %}
+    </title>
+    <meta name="description"
+          content="{% block page_meta_description %}{% endblock page_meta_description %}">
+    <link rel="stylesheet" href="{% static 'rao/agency/css/bootstrap-italia.min.css' %}">
+    {% block extra_head %}
+        <link rel="icon" href="{% static 'rao/agency/images/favicon.ico' %}">
+        <link rel="icon" href="{% static 'rao/agency/images/favicon-32x32.png' %}" sizes="32x32" type="image/png">
+        <link rel="icon" href="{% static 'rao/agency/images/favicon-16x16.png' %}" sizes="16x16" type="image/png">
+    {% endblock extra_head %}
+
+
+</head>
+<body>
+{% block header_wrapper %}
+    <div class="it-header-wrapper">
+
+        {% block header_slim_wrapper %}
+            <div class="it-header-slim-wrapper">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="it-header-slim-wrapper-content">
+                                <a class="d-none d-lg-block navbar-brand"
+                                   href="{% block header_slim_org_url %}#{% endblock header_slim_org_url %}">
+                                    {% block header_slim_org_name %}
+                                        Nome Ente/Organizzazione
+                                    {% endblock header_slim_org_name %}
+                                </a>
+                                <div class="nav-mobile">
+                                    <nav>
+                                        <a class="it-opener d-lg-none" data-toggle="collapse" href="#menu-principale"
+                                           role="button" aria-expanded="false" aria-controls="menu-principale">
+                                            <span>
+                                                {% block header_slim_mobile_org_name %}
+                                                    Nome Ente/Organizzazione
+                                                {% endblock header_slim_mobile_org_name %}
+                                            </span>
+                                            {% block header_mobile_arrow %}
+                                                <svg class="icon">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-expand"></use>
+                                                </svg>
+                                            {% endblock header_mobile_arrow %}
+                                        </a>
+                                        {% block header_mobile_slim_menu %}
+                                            <div class="link-list-wrapper collapse" id="menu-principale">
+                                                <ul class="link-list">
+                                                    <li><a href="#">Link 1</a></li>
+                                                    <li><a href="#">Link 2 Active</a></li>
+                                                </ul>
+                                            </div>
+                                        {% endblock header_mobile_slim_menu %}
+                                    </nav>
+                                </div>
+                                {% block header_slim_right_zone %}
+                                    <div class="header-slim-right-zone">
+
+                                        {% block header_slim_sub_menu %}
+                                            <div class="nav-item dropdown">
+                                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"
+                                                   aria-expanded="false">
+                                                    <span>ITA</span>
+                                                    <svg class="icon d-none d-lg-block">
+                                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-expand"></use>
+                                                    </svg>
+                                                </a>
+                                                <div class="dropdown-menu">
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="link-list-wrapper">
+                                                                <ul class="link-list">
+                                                                    <li><a class="list-item"
+                                                                           href="#"><span>ITA</span></a></li>
+                                                                    <li><a class="list-item"
+                                                                           href="#"><span>ENG</span></a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endblock header_slim_sub_menu %}
+
+                                        {% block header_slim_buttons %}
+                                            <div class="it-access-top-wrapper">
+                                                <button class="btn btn-primary btn-sm" href="#" type="button">Accedi
+                                                </button>
+                                            </div>
+                                        {% endblock header_slim_buttons %}
+                                    </div>
+                                {% endblock header_slim_right_zone %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endblock header_slim_wrapper %}
+
+        <div class="it-nav-wrapper">
+            <div class="it-header-center-wrapper">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="it-header-center-content-wrapper">
+                                <div class="it-brand-wrapper">
+                                    <a href="{% block header_center_url %}#{% endblock header_center_url %}">
+                                        {% block header_center_logo %}
+
+                                        {% if params.active_operator.name %}
+                                            <svg class="icon">
+                                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-code-circle"></use>
+                                            </svg>
+                                        {% endif %}
+                                        {% endblock header_center_logo %}
+
+                                        <div class="it-brand-text">
+                                            <h2 class="no_toc">
+                                                {% block header_center_org_name %}
+                                                    Nome Organizzazione
+                                                {% endblock header_center_org_name %}
+                                            </h2>
+                                            <h3 class="no_toc d-none d-md-block">
+                                                {% block header_center_org_subname %}
+                                                    Sottotitolo Organizzazione
+                                                {% endblock header_center_org_subname %}
+                                            </h3>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                {% block header_center_right_zone %}
+                                    <div class="it-right-zone">
+
+                                        {% block header_center_search %}
+                                            {% if request.session.is_authenticated %}
+                                                <div class="it-search-wrapper">
+                                                    {% block header_center_search_text %}
+                                                        <span class="d-none d-md-block">
+                                                            {% block header_center_search_word %}
+                                                                Cerca
+                                                            {% endblock header_center_search_word %}
+                                                        </span>
+                                                    {% endblock header_center_search_text %}
+
+                                                    {% if params.active_operator.name %}
+                                                        <a class="search-link rounded-icon"
+                                                           href="{% block header_center_search_url %}#{% endblock header_center_search_url %}"
+                                                           aria-label="Logout" title="Logout">
+                                                            {% block header_center_search_icon %}
+                                                                <svg class="icon">
+                                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-search"></use>
+                                                                </svg>
+                                                            {% endblock header_center_search_icon %}
+                                                        </a>
+
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% endblock header_center_search %}
+                                    </div>
+                                {% endblock header_center_right_zone %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% block main_menu %}
+            {% endblock main_menu %}
+        </div>
+    </div>
+{% endblock header_wrapper %}
+
+{% if messages %}
+    <div class="messaggi">
+        {% block messages %}
+            <div class="container">
+                <div class="col-12 pt-md-5 pt-lg-5 pt-4 bd-content">
+                    {% block centered_messages %}
+                        {% for message in messages %}
+                            <div class="mb-0 alert alert-{{ message.tags }}
+                                   {% if not forloop.first %}mt-1{% endif %}"
+                                 role="alert">{{ message.body }}</div>
+                        {% endfor %}
+                    {% endblock centered_messages %}
+                </div>
+            </div>
+        {% endblock messages %}
+    </div>
+{% endif %}
+
+<div class="main-body">
+    {% block container %}
+        <div class="container">
+            <div class="col-12 py-md-5 bd-content">
+                {% block centered_container %}{% endblock %}
+            </div>
+        </div>
+    {% endblock container %}
+</div>
+
+{% block footer %}
+    <footer class="it-footer">
+        <div class="it-footer-main">
+            <div class="container">
+                {% block footer_top_section %}
+                    <section>
+                        <div class="row clearfix">
+                            <div class="col-sm-10">
+                                <div class="it-brand-wrapper">
+                                    <a href="{% block footer_logo_url %}#{% endblock footer_logo_url %}">
+                                        {% block footer_logo %}
+                                            <svg class="icon">
+                                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-code-circle"></use>
+                                            </svg>
+                                        {% endblock footer_logo %}
+                                        {% block footer_org_text %}
+                                            <div class="it-brand-text">
+                                                <h2 class="no_toc">
+                                                    {% block footer_org_name %}
+                                                        Lorem Ipsum
+                                                    {% endblock footer_org_name %}
+                                                </h2>
+                                                <h3 class="no_toc d-none d-md-block">
+
+                                                    {% block footer_org_subname %}
+                                                        Lorem Ipsum sit amet
+                                                    {% endblock footer_org_subname %}
+
+                                                </h3>
+                                            </div>
+                                        {% endblock footer_org_text %}
+                                    </a>
+                                </div>
+                            </div>
+
+                                <div class="col-sm-2 it-brand-wrapper">
+                                    Versione {{ version_app }}
+                                </div>
+                        </div>
+                    </section>
+                {% endblock footer_top_section %}
+
+
+            </div>
+        </div>
+    </footer>
+{% endblock footer %}
+
+{% block bottom_scripts %}
+    <script>window.__PUBLIC_PATH__ = "{% static 'rao/agency/fonts' %}"</script>
+    <script src="{% static 'rao/agency/js/bootstrap-italia.bundle.min.js' %}"></script>
+{% endblock bottom_scripts %}
+{% block extra_scripts %}{% endblock extra_scripts %}
+</body>
+</html>

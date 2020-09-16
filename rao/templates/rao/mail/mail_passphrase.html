@@ -1,0 +1,29 @@
+{% extends "rao/mail/baseMail.html" %}
+
+{% block header_name %}
+    {{ mail_elements.rao_name }}
+{% endblock %}
+
+
+{% block message_title_first %}
+Benvenuto {{mail_elements.nameUser}} {{mail_elements.familyNameUser}},
+<br>ecco la seconda parte del tuo Codice di Attivazione:
+{% endblock %}
+
+
+{% block message %}
+    <span>{{ passphrase2 }}</span>
+{% endblock %}
+
+{% block message_title_second %}
+Conservala con cura, ti verr&aacute; richiesta in fase di rilascio dell'identit&aacute; digitale.<br>
+In allegato il tuo token identificativo. Lo dovrai caricare sul sito web dell'IdP sempre in fase di rilascio dell'identit&aacute; digitale.
+{% endblock %}
+
+
+
+{% block comune %}
+    {{ mail_elements.rao_name }}
+{% endblock %}
+
+   

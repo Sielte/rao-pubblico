@@ -1,0 +1,200 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block container %}
+    <main>
+        <div class="container my-4">
+            <div class="float-left mt-2 mb-2">
+                <h3 class="text-center text-primary">Configurazione R.A.O.</h3>
+            </div>
+            <form action="{% url 'agency:setup' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div id="accordionDiv1" class="collapse-div" role="tablist">
+
+                    <div class="collapse-header" id="headingA1">
+                        <button type="button" data-toggle="collapse" data-target="#accordion1" aria-expanded="true"
+                                aria-controls="accordion1">
+                            Amministratore*
+                        </button>
+                    </div>
+                    <div id="accordion1" class="collapse show" role="tabpanel" aria-labelledby="headingA1">
+                        <div class="collapse-body">
+                            <div class="pt-3 form-row ">
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="fiscalNumberField" autocomplete="0"
+                                           name="fiscalNumberField"
+                                           aria-describedby="fiscalNumberFieldHelp"
+                                            {% if form.fiscalNumberField.value %}
+                                           value="{{ form.fiscalNumberField.value }}" {% endif %}>
+                                    <label for="fiscalNumberField">Codice Fiscale*</label>
+                                    <small id="fiscalNumberFieldHelp"
+                                           class="form-text  text-danger"> {{ form.fiscalNumberField.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-row ">
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="nameField" name="nameField" autocomplete="0"
+                                           aria-describedby="nameFieldHelp" {% if form.nameField.value %}
+                                           value="{{ form.nameField.value }}" {% endif %}>
+                                    <label for="nameField">Nome*</label>
+                                    <small id="nameFieldHelp"
+                                           class="form-text  text-danger">{{ form.nameField.errors }} </small>
+                                </div>
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="surnameField" name="surnameField" autocomplete="0"
+                                           aria-describedby="surnameFieldHelp" {% if form.surnameField.value %}
+                                           value="{{ form.surnameField.value }}" {% endif %}>
+                                    <label for="surnameField">Cognome*</label>
+                                    <small id="surnameFieldHelp"
+                                           class="form-text text-danger">{{ form.surnameField.errors }}</small>
+                                </div>
+                            </div>
+                            <div class="form-row ">
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="usernameField" name="usernameField" autocomplete="0"
+                                           oncopy="return false" onpaste="return false"
+                                           aria-describedby="usernameFieldHelp" {% if form.usernameField.value %}
+                                           value="{{ form.usernameField.value }}" {% endif %}>
+                                    <label for="usernameField">Indirizzo email*</label>
+                                    <small id="usernameFieldHelp"
+                                           class="form-text  text-danger">{{ form.usernameField.errors }} </small>
+                                </div>
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="confirmUsernameField" autocomplete="0"
+                                           name="confirmUsernameField"
+                                           aria-describedby="confirmUsernameFieldHelp"
+                                           oncopy="return false" onpaste="return false"
+                                            {% if form.confirmUsernameField.value %}
+                                           value="{{ form.confirmUsernameField.value }}" {% endif %}>
+                                    <label for="confirmUsernameField">Conferma indirizzo email*</label>
+                                    <small id="confirmUsernameFieldHelp"
+                                           class="form-text text-danger">{{ form.confirmUsernameField.errors }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="collapse-header" id="headingA2">
+                        <button type="button" data-toggle="collapse" data-target="#accordion2"
+                                aria-expanded="false"
+                                aria-controls="accordion2">
+                            Agenzia R.A.O.*
+                        </button>
+                    </div>
+                    <div id="accordion2" class="collapse show" role="tabpanel" aria-labelledby="headingA2">
+                        <div class="collapse-body">
+                            <div class="form-row ">
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="nameRAOField" autocomplete="0"
+                                           name="nameRAOField"
+                                           aria-describedby="nameRAOFieldHelp" {% if form.nameRAOField.value %}
+                                           value="{{ form.nameRAOField.value }}" {% endif %}>
+                                    <label for="nameRAOField">Nome del comune*</label>
+                                    <small id="nameRAOFieldHelp"
+                                           class="form-text  text-danger"> {{ form.nameRAOField.errors }} </small>
+                                </div>
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="issuerCodeField" autocomplete="0"
+                                           name="issuerCodeField"
+                                           aria-describedby="issuerCodeFieldHelp"
+                                            {% if form.issuerCodeField.value %}
+                                           value="{{ form.issuerCodeField.value }}" {% endif %}>
+                                    <label for="issuerCodeField">Codice identificativo IPA*</label>
+                                    <small id="issuerCodeFieldHelp"
+                                           class="form-text text-danger">{{ form.issuerCodeField.errors }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collapse-header" id="headingA3">
+                        <button type="button" data-toggle="collapse" data-target="#accordion3"
+                                aria-expanded="false"
+                                aria-controls="accordion3">
+                            Configurazione email SMTP*
+                        </button>
+                    </div>
+                    <div id="accordion3" class="collapse show" role="tabpanel" aria-labelledby="headingA3">
+                        <div class="collapse-body">
+                            <div class="form-row ">
+                                <div class="form-group col-lg-12">
+                                    <input type="text" class="form-control" id="smtpMailFromField" autocomplete="0"
+                                           name="smtpMailFromField"
+                                           aria-describedby="smtpMailFromFieldHelp" {% if form.smtpMailFromField.value %}
+                                           value="{{ form.smtpMailFromField.value }}" {% endif %} placeholder="Comune di Catania <indirizzo@mail.it>">
+                                    <label for="smtpMailFromField">Da*</label>
+                                    <small id="smtpMailFromFieldHelp"
+                                           class="form-text text-danger"> {{ form.smtpMailFromField.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-row ">
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="emailRAOField" autocomplete="0"
+                                           name="emailRAOField"
+                                           aria-describedby="emailRAOFieldHelp" {% if form.emailRAOField.value %}
+                                           value="{{ form.emailRAOField.value }}" {% endif %}>
+                                    <label for="emailRAOField">Username</label>
+                                    <small id="emailRAOFieldHelp"
+                                           class="form-text  text-danger"> {{ form.emailRAOField.errors }} </small>
+                                </div>
+                                <div class="form-group col-lg-6">
+                                    <div class="input-group">
+                                        <input type="password" autocomplete="new-password"
+                                               class="form-control col-12 input-password"
+                                               id="pwdRAOField" name="pwdRAOField"
+                                               aria-describedby="pwdRAOFieldHelp">
+                                        <label for="pwdRAOField">Password</label>
+                                        <span class="password-icon " aria-hidden="true">
+                                                <svg class="password-icon-visible icon icon-sm"><use
+                                                        xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use></svg>
+                                                <svg class="password-icon-invisible icon icon-sm d-none"><use
+                                                        xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use></svg>
+                                            </span>
+                                    </div>
+                                    <small id="pwdRAOFieldHelp"
+                                           class="form-text text-danger">{{ form.pwdRAOField.errors }}</small>
+                                </div>
+                            </div>
+                            <div class="form-row ">
+                                <div class="form-group col-lg-6">
+                                    <input type="text" class="form-control" id="hostField" autocomplete="0"
+                                           name="hostField"
+                                           aria-describedby="hostFieldHelp" {% if form.hostField.value %}
+                                           value="{{ form.hostField.value }}" {% endif %}>
+                                    <label for="hostField">Host Posta in Uscita (SMTP)*</label>
+                                    <small id="hostFieldHelp"
+                                           class="form-text  text-danger"> {{ form.hostField.errors }} </small>
+                                </div>
+                                <div class="form-group col-lg-3">
+                                    <input type="text" class="form-control" id="emailPortField" autocomplete="0"
+                                           name="emailPortField"
+                                           aria-describedby="emailPortFieldHelp" {% if form.emailPortField.value %}
+                                           value="{{ form.emailPortField.value }}" {% endif %}>
+                                    <label for="emailPortField">Porta in Uscita (SMTP)*</label>
+                                    <small id="emailPortFieldHelp"
+                                           class="form-text  text-danger"> {{ form.emailPortField.errors }} </small>
+                                </div>
+                                <div class="form-group col-lg-3">
+                                    <div class="bootstrap-select-wrapper">
+                                        {{ form.cryptoMailField }}
+                                        <small id="cryptoMailFieldHelp"
+                                               class="form-text  text-danger">{{ form.cryptoMailField.errors }}</small>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row d-flex justify-content-center pt-5 pb-5">
+                        <button type="submit" class="btn btn-primary col-sm-4 col-10" title="Aggiungi">Invia Mail di
+                            Verifica
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </main>
+{% endblock %}
+
+{% block bl_javascripts %}
+{% endblock %}

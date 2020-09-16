@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <style type="text/css">
+        div.blueitalia {
+            background-color: #06c;
+            height: 100px;
+            line-height: 100px
+        }
+
+        div.bluefooter {
+            background-color: #036;
+            height: 100px;
+            line-height: 100px
+        }
+
+        h1.blueitalia{
+            color: #06c;
+        }
+
+        h3.pad{
+            color: #06c;
+        }
+    </style>
+    <title>Stampa password</title>
+</head>
+<body>
+
+<div>
+    <h1 class="blueitalia" style="text-align:center;">{{ RAO_name }}</h1>
+</div>
+<div>
+    <p>Di seguito il pin temporaneo di 6 caratteri da consegnare all'operatore:</p><h3 class="pad" >{{ pin }}</h3>
+</div>
+</body>
+</html>

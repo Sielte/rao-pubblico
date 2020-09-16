@@ -1,0 +1,138 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+    <div class="row p-4">
+        <div class="col-xl-10 col-lg-10 col-md-10 col-sm-10 col-10">
+            <form id="searchform" action="{% url 'agency:list_identity' 1 token %}" method="post"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group autocomplete-wrapper">
+                    <input type="search" class="autocomplete" placeholder="Testo da cercare"
+                           id="autocomplete-id"
+                           name="autocomplete-id"
+                           data-autocomplete="[]"
+                           {% if request.session.identity_filter %}value="{{ request.session.identity_filter }}"{% endif %}>
+                    <a class="rounded-icon float-right" onclick="$('#searchform').submit()">
+                        <span class="autocomplete-icon" aria-hidden="true">
+                            <svg class="icon icon-sm">
+                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-search"></use></svg>
+                         </span>
+                    </a>
+                    <label for="autocomplete-id" class="sr-only">Cerca nel sito</label>
+                </div>
+            </form>
+        </div>
+        {% if not params.is_admin %}
+            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-2">
+                <a class="rounded-icon float-right" href="{% url 'agency:add_identity' token %}"
+                   aria-label="Nuova identit&aacute;"
+                   title="Nuova identit&aacute;">
+        <span class="rounded-icon">
+                    <svg class="icon icon-lg icon-primary">
+                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-plus-circle"></use>
+                    </svg>
+                    </span>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+
+        {% if params.list_identity %}
+        <div class="col-xl-11 col-lg-11 col-md-11 col-sm-11 col-11">
+            <div class="table-responsive mx-auto text-center">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Codice Fiscale</th>
+                        <th scope="col">Data Identificazione</th>
+                                {% if params.is_admin %}
+                            <th scope="col">Nome Operatore</th>
+                                {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for identityReq in params.list_identity %}
+                        {% if params.is_admin or identityReq.idOperator.fiscalNumber == params.active_operator.fiscalNumber %}
+                            <tr>
+                                <td>{{ identityReq.uuid_identity }}</td>
+                                <td>{{ identityReq.fiscalNumberUser }}</td>
+                                <td>{{ identityReq.timestamp_identification|date:"d/m/Y H:i" }} (UTC)</td>
+                                {% if params.is_admin %}
+                                    <td>{{ identityReq.idOperator.name }} {{ identityReq.idOperator.surname }}</td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-11">
+            <nav class="pagination-wrapper justify-content-center" aria-label="Navigazione centrata">
+                <ul class="pagination">
+                    <li class="page-item {% if not params.previous_page %}disabled{% endif %}">
+                        <a class="page-link" href="{% url 'agency:list_identity' params.previous_page token %}"
+                           tabindex="-1"
+                           aria-hidden="true">
+                            <svg class="icon {% if params.previous_page is None %}disabled{% else %}icon-primary{% endif %}">
+                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-chevron-left"></use>
+                            </svg>
+                            <span class="sr-only">Pagina precedente</span>
+                        </a>
+                    </li>
+                    {% if params.previous_page %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="{% url 'agency:list_identity' params.previous_page token %}">{{ params.previous_page }}</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item">
+                        <a class="page-link" href="{% url 'agency:list_identity' params.page token %}"
+                           aria-current="page">
+                            <span class="d-inline-block d-sm-none">Pagina </span> {{ params.page }}
+                        </a>
+                    </li>
+                    {% if params.next_page %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="{% url 'agency:list_identity' params.next_page token %}">{{ params.next_page }}</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item {% if params.next_page is None %}disabled{% endif %}">
+                        <a class="page-link" href="{% url 'agency:list_identity'  params.next_page token %}">
+                            <span class="sr-only">Pagina successiva</span>
+                            <svg class="icon {% if params.next_page is None %}disabled{% else %}icon-primary{% endif %}">
+                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-chevron-right"></use>
+                            </svg>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+    {% else %}
+<div class="mx-auto mb-5">
+    <h6 class="text-secondary"> Nessuna richiesta presente.</h6>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block bl_javascripts %}
+    <script>
+        $(document).ready(function () {
+            $('#autocomplete-id').keypress(function (e) {
+                if (e.keyCode === 13)
+                    $('#searchform').submit();
+            });
+        });
+    </script>
+{% endblock %}

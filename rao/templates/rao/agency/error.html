@@ -1,0 +1,14 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+
+{% block container %}
+    <h1 class="pt-4 display-1 text-center">{{ statusCode }}</h1>
+    <h3 class="text-center">{{ message }}</h3>
+    <div class="row pt-5 pb-5">
+        {% if statusCode == 401 %}
+            <a onclick="window.history.back();" href="#" class="btn btn-primary mx-auto w-25">Riprova</a>
+        {% else %}
+            <a href="{% url 'agency:login' %}" class="btn btn-primary mx-auto w-25">Torna alla pagina iniziale</a>
+        {% endif %}
+    </div>
+{% endblock %}

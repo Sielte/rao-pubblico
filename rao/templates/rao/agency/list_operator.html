@@ -1,0 +1,328 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+<div class="row p-4">
+    <div class="it-modal">
+        <div class="modal alert-modal" tabindex="-1" role="dialog" id="modale_check_status">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <svg class="icon">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                        </svg>
+                        <h5 class="modal-title">Richiesta di conferma
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Sei sicuro di voler disabilitare l'operatore?</p>
+                    </div>
+                    <div class="modal-footer">
+
+                        <form class="mx-auto" action="{% url 'agency:disable_operator' 1 token %}" method="POST"
+                              id="form_toggle_status" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <input type="hidden" name="username" id="username" value="">
+                            <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal" >Annulla
+                            </button>
+                            <button class="btn btn-primary btn-sm" type="submit" id="prosegui_btn" >Continua</button>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="it-modal">
+        <div class="modal alert-modal" tabindex="-1" role="dialog" id="modale_reset_pin">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <svg class="icon">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                        </svg>
+                        <h5 class="modal-title">Richiesta di conferma
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Sei sicuro di voler resettare il PIN di firma per l'operatore? Questa azione comporta
+                            la disattivazione dell'operatore sul sistema di firma, fino a nuova configurazione.</p>
+                        <p class="pt-1">Inserisci il tuo pin del sistema di Firma per resettare il pin dell'operatore:</p>
+                    </div>
+                    <div class="modal-footer">
+
+                        <form class="mx-auto" action="{% url 'agency:reset_pin_operator' 1 token %}" method="POST"
+                              id="form_reset_pin" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="input-group col-12">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <svg class="icon icon-sm icon-primary">
+                                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <input type="password" autocomplete="PIN"
+                                       class="form-control col-12 input-password" id="pinField"
+                                       oncopy="return false" onpaste="return false"
+                                       name="pinField" aria-describedby="pinHelp"
+                                       placeholder="PIN di conferma">
+                                <div class="input-group-append password-icon"
+                                     title="Mostra/Nascondi PIN">
+                                    <svg class="password-icon-visible icon icon-sm">
+                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                    </svg>
+                                    <svg class="password-icon-invisible icon icon-sm d-none">
+                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                    </svg>
+                                </div>
+                            </div>
+                            <input type="hidden" name="username_op" id="username_op" value="">
+                            <div class="pt-2">
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal" >Annulla
+                                </button>
+                                <button class="btn btn-primary btn-sm" type="submit" id="reset_pin_btn" >Continua</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="it-modal">
+        <div class="modal alert-modal" tabindex="-1" role="dialog" id="modale_resend_mail">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <svg class="icon">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                        </svg>
+                        <h5 class="modal-title">Richiesta di conferma
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Sei sicuro di voler reinviare la mail di verifica all'operatore? Questa azione comporta
+                            la generazione di un nuovo PIN temporaneo.</p>
+                        <p class="pt-1">Inserisci il tuo pin del sistema di Firma per resettare il pin dell'operatore:</p>
+                    </div>
+                    <div class="modal-footer">
+
+                        <form class="mx-auto" action="{% url 'agency:resend_mail_activation' 1 token %}" method="POST"
+                              id="form_resend_mail" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="input-group col-12">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <svg class="icon icon-sm icon-primary">
+                                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <input type="password" autocomplete="PIN"
+                                       class="form-control col-12 input-password" id="pinField_for_mail"
+                                       oncopy="return false" onpaste="return false"
+                                       name="pinField" aria-describedby="pinHelp"
+                                       placeholder="PIN di conferma">
+                                <div class="input-group-append password-icon"
+                                     title="Mostra/Nascondi PIN">
+                                    <svg class="password-icon-visible icon icon-sm">
+                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                    </svg>
+                                    <svg class="password-icon-invisible icon icon-sm d-none">
+                                        <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                    </svg>
+                                </div>
+                            </div>
+                            <input type="hidden" name="username_op" id="username_op_for_mail" value="">
+                            <div class="pt-2">
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal" >Annulla
+                                </button>
+                                <button class="btn btn-primary btn-sm" type="submit" id="resend_mail_btn" >Continua</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="col-xl-10 col-lg-10 col-md-10 col-sm-10 col-10">
+        <form id="searchform" action="{% url 'agency:list_operator' 1 token %}" method="post"
+              enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group autocomplete-wrapper">
+                <input type="search" class="autocomplete" placeholder="Testo da cercare"
+                       id="autocomplete-id"
+                       name="autocomplete-id"
+                       data-autocomplete="[]"
+                       {% if request.session.operator_filter %}value="{{ request.session.operator_filter }}"{% endif %}>
+                <a class="rounded-icon float-right" onclick="$('#searchform').submit()">
+                        <span class="autocomplete-icon" aria-hidden="true">
+                            <svg class="icon icon-sm"><use
+                                    xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-search"></use></svg>
+                         </span>
+                </a>
+                <label for="autocomplete-id" class="sr-only">Cerca nel sito</label>
+            </div>
+        </form>
+    </div>
+    <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-2">
+        <a class="rounded-icon float-right" href="{% url 'agency:add_operator' token %}"
+           aria-label="Nuovo operatore" title="Nuovo operatore">
+            <span class="rounded-icon">
+                <svg class="icon icon-lg icon-primary">
+                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-plus-circle"></use>
+                </svg>
+            </span>
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-11 col-lg-11 col-md-11 col-sm-11 col-11">
+        <div class="table-responsive mx-auto text-center">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Username</th>
+                    <th scope="col">Nome</th>
+                    <th scope="col">Cognome</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Stato</th>
+                    <th scope="col">Azioni</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if params.operators %}
+                {% for operator in params.operators %}
+                <tr>
+                    <td>{{ operator.id }}</td>
+                    <td>{{ operator.fiscalNumber }}</td>
+                    <td>{{ operator.name }}</td>
+                    <td>{{ operator.surname }}</td>
+                    <td>{{ operator.email }}</td>
+
+
+                    <td>
+                        <div class="text-center"
+                             title="{% if operator.status %}Attivo{% else %}Disabilitato{% endif %}">
+                            <svg class="icon icon-{% if operator.status %}success{% else %}secondary{% endif %}"
+
+                                 height="20" width="20">
+                                <circle cx="10" cy="10" r="8"/>
+                            </svg>
+                        </div>
+                    </td>
+
+                    <td>
+                        {% if operator.fiscalNumber != request.session.username %}
+                        {% if operator.status %}
+                                <button class="btn btn-xs"
+                                        onclick="$('#modale_check_status').modal('show'); document.getElementById('username').value = '{{ operator.fiscalNumber }}';"
+                                        title="DISABILITA">
+
+                            <span class="primary-color">Disabilita</span>
+                                </button>
+                                <button class="btn btn-xs"
+                                        onclick="$('#modale_reset_pin').modal('show'); document.getElementById('username_op').value = '{{ operator.fiscalNumber }}';"
+                                        title="Reset PIN">
+
+                            <span class="primary-color">Reset PIN</span>
+                                </button>
+
+{% else %}
+
+                        <button class="btn btn-xs"
+                                onclick="$('#modale_resend_mail').modal('show'); document.getElementById('username_op_for_mail').value = '{{ operator.fiscalNumber }}';"
+                                title="Reinvia Mail">
+                            <span class="primary-color">Reinvia Mail</span>
+                        </button>
+                        {% endif %}
+                        {% endif %}
+
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-11">
+        <nav class="pagination-wrapper justify-content-center" aria-label="Navigazione centrata">
+            <ul class="pagination">
+                <li class="page-item {% if not params.previous_page %}disabled{% endif %}">
+                    <a class="page-link" href="{% url 'agency:list_operator' params.previous_page token %}"
+                       tabindex="-1"
+                       aria-hidden="true">
+                        <svg class="icon {% if params.previous_page is None %}disabled{% else %}icon-primary{% endif %}">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-chevron-left"></use>
+                        </svg>
+                        <span class="sr-only">Pagina precedente</span>
+                    </a>
+                </li>
+                {% if params.previous_page %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{% url 'agency:list_operator' params.previous_page token %}">{{ params.previous_page }}</a>
+                </li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link" href="{% url 'agency:list_operator' params.page token %}"
+                       aria-current="page">
+                        <span class="d-inline-block d-sm-none">Pagina </span> {{ params.page }}
+                    </a>
+                </li>
+                {% if params.next_page %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{% url 'agency:list_operator' params.next_page token %}">{{ params.next_page }}</a>
+                </li>
+                {% endif %}
+                <li class="page-item {% if params.next_page is None %}disabled{% endif %}">
+                    <a class="page-link" href="{% url 'agency:list_operator'  params.next_page token %}">
+                        <span class="sr-only">Pagina successiva</span>
+                        <svg class="icon {% if params.next_page is None %}disabled{% else %}icon-primary{% endif %}">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-chevron-right"></use>
+                        </svg>
+
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <a id="download_pdf" href="{% url 'agency:download_pdf' token %}" ></a>
+</div>
+{% endblock %}
+
+{% block bl_javascripts %}
+<script>
+        $(document).ready(function () {
+            $('#autocomplete-id').keypress(function (e) {
+                if (e.keyCode === 13)
+                    $('#searchform').submit();
+            });
+        });
+    </script>
+
+
+<script>
+
+{% if pin in request.session or request.session.pin %}
+$("document").ready(function() {
+    document.getElementById('download_pdf').click();
+});
+{% endif %}
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+<main xmlns:id="http://www.w3.org/1999/xhtml">
+    <div class="container my-4">
+
+        <form autocomplete="off" action="{% url 'agency:add_operator' token %}" method="post"
+              enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if params.operator %}
+            <div class="pin-modal">
+                <div class="modal alert-modal" tabindex="-1" role="dialog" id="pin_request">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <svg class="icon">
+                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                                </svg>
+                                <h5 class="modal-title">Conferma creazione nuovo operatore.
+                                </h5>
+                            </div>
+                            <div class="modal-body mb-5">
+                                <div class="row col-12">
+                                    <label >Inserisci il pin del sistema di Firma per confermare l'aggiunta dell'operatore:</label>
+                                </div>
+                                    <div class="input-group col-12">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">
+                                                <svg class="icon icon-sm icon-primary">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-locked"></use>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <input type="password" autocomplete="PIN"
+                                               class="form-control col-12 input-password" id="pinField"
+                                               oncopy="return false" onpaste="return false"
+                                               name="pinField" aria-describedby="pinHelp"
+                                               placeholder="PIN di conferma">
+                                        <div class="input-group-append password-icon"
+                                             title="Mostra/Nascondi PIN">
+                                            <svg class="password-icon-visible icon icon-sm">
+                                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                            </svg>
+                                            <svg class="password-icon-invisible icon icon-sm d-none">
+                                                <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                            </svg>
+                                        </div>
+                                </div>
+                            </div>
+
+
+
+
+                            <div class="modal-footer">
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal">Annulla</button>
+
+                                <input class="btn btn-primary btn-sm" type="submit" value="Aggiungi operatore" name="add_operator">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+
+            <div id="accordionDiv1" class="collapse-div" role="tablist">
+
+                <div class="collapse-header" id="headingA1">
+                    <button type="button" data-toggle="collapse" data-target="#accordion1" aria-expanded="true"
+                            aria-controls="accordion1">
+                        Anagrafica*
+                    </button>
+                </div>
+                <div id="accordion1" class="collapse show" role="tabpanel" aria-labelledby="headingA1">
+                    <div class="collapse-body">
+                        <div class="form-row">
+
+                            <div class="form-group col-lg-4">
+                                <input type="text" class="form-control" id="fiscalNumber" name="fiscalNumber" autocomplete="0"
+                                       aria-describedby="fiscalNumberHelp" {% if form.fiscalNumber.value %}
+                                       value="{{ form.fiscalNumber.value }}" {% endif %}>
+                                <label for="fiscalNumber">Codice Fiscale*</label>
+                                <small id="fiscalNumberHelp"
+                                       class="form-text text-danger"> {{ form.fiscalNumber.errors }} </small>
+                            </div>
+
+                            <div class="form-group col-lg-4">
+                                <input type="text" class="form-control" id="name" name="name" autocomplete="0"
+                                       aria-describedby="nameHelp" {% if form.name.value %}
+                                       value="{{ form.name.value }}" {% endif %}>
+                                <label for="name">Nome*</label>
+                                <small id="nameHelp" class="form-text text-danger">{{ form.name.errors }}</small>
+                            </div>
+                            <div class="form-group col-lg-4">
+                                <input type="text" class="form-control" id="familyName" name="familyName" autocomplete="0"
+                                       aria-describedby="familyNameHelp" {% if form.familyName.value %}
+                                       value="{{ form.familyName.value }}" {% endif %}>
+                                <label for="familyName">Cognome*</label>
+                                <small id="familyNameHelp"
+                                       class="form-text  text-danger">{{ form.familyName.errors }}</small>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+            <div class="collapse-header" id="headingA2">
+                <button type="button" data-toggle="collapse" data-target="#accordion2" aria-expanded="false"
+                        aria-controls="accordion2">
+                    Recapiti*
+                </button>
+            </div>
+            <div id="accordion2" class="collapse show" role="tabpanel" aria-labelledby="headingA2">
+
+                <div class="collapse-body">
+
+
+                    <div class="form-row ">
+                        <div class="form-group col-lg-6">
+                            <input type="text" class="form-control" id="email" name="email" autocomplete="0"
+                                   oncopy="return false" onpaste="return false"
+                                   aria-describedby="emailHelp"  {% if form.email.value %}
+                                   value="{{ form.email.value }}" {% endif %}>
+                            <label for="email">Indirizzo email*</label>
+                            <small id="emailHelp" class="form-text  text-danger"> {{ form.email.errors }} </small>
+                        </div>
+                        <div class="form-group col-lg-6">
+                            <input type="text" class="form-control" id="confirmEmail" name="confirmEmail" autocomplete="0"
+                                   oncopy="return false" onpaste="return false"
+                                   aria-describedby="confirmEmailHelp"  {% if form.confirmEmail.value %}
+                                   value="{{ form.confirmEmail.value }}" {% endif %}>
+                            <label for="confirmEmail">Conferma indirizzo email*</label>
+                            <small id="confirmEmailHelp"
+                                   class="form-text text-danger"> {{ form.confirmEmail.errors }}</small>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+
+
+            <div class="row d-flex justify-content-center pt-5 pb-5">
+                <button type="submit" class="btn btn-primary col-sm-4 col-10" title="Aggiungi">Aggiungi operatore
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+{% endblock %}
+{% block bl_javascripts %}
+<script>
+
+        {% if params.operator %} $('#pin_request').modal('show') {% endif %}
+</script>
+{% endblock %}

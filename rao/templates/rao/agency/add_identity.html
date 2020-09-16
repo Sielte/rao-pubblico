@@ -1,0 +1,691 @@
+{% extends "rao/agency/base.html" %}
+{% load staticfiles %}
+{% block page-content %}
+<main>
+    <div class="container my-4">
+        <div class="float-left mt-2 mb-2">
+            <h3 class="text-center text-primary">Aggiungi Richiesta:</h3>
+        </div>
+        <form id="add_identity_form" action="{% url 'agency:add_identity' token %}"
+              data-url="{% url 'agency:ajax_load' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if params.user_detail %}
+            <div class="summary-modal">
+                <div class="modal alert-modal" tabindex="-1" role="dialog" id="summary">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <svg class="icon">
+                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                                </svg>
+                                <h5 class="modal-title">Riepilogo della richiesta:
+                                </h5>
+                            </div>
+                            <div class="modal-body mb-5">
+                                <div id="accordionDiv4" class="collapse-div pt-5" role="tablist">
+
+                                    <div class="collapse-header" id="headingA4">
+                                        <button type="button" data-toggle="collapse" data-target="#accordion4" aria-expanded="true" aria-controls="accordion4">
+                                            Anagrafica*
+                                        </button>
+                                    </div>
+                                    <div id="accordion4" class="collapse show" role="tabpanel" aria-labelledby="headingA4">
+                                        <div class="collapse-body">
+
+                                            <div class="row">
+                                                <div class="col-lg-4">
+                                                    <p>Codice fiscale:</p>
+                                                    <p id="modalFiscalCode" class="font-weight-bold"> {{ params.user_detail.fiscalNumber }} </p>
+                                                </div>
+
+                                                <div class="col-lg-4">
+                                                    <p>Nome:</p>
+                                                    <p id="modalName" class="font-weight-bold"> {{ params.user_detail.name }} </p>
+                                                </div>
+
+                                                <div class="col-lg-4">
+                                                    <p>Cognome:</p>
+                                                    <p id="modalSurname" class="font-weight-bold"> {{ params.user_detail.familyName }} </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="row pt-5">
+                                                <div class="col-lg-1">
+                                                    <p>Sesso:</p>
+                                                    <p id="modalGender" class="font-weight-bold">{{ params.user_detail.gender}} </p>
+                                                </div>
+                                                <div class="col-lg-5">
+                                                    <p>Codice della Tessera Sanitaria:</p>
+                                                    <p id="modalIdentificationSerialCode" class="font-weight-bold">{{ params.user_detail.identificationSerialCode }} </p>
+                                                </div>
+                                                <div class="col-lg-6">
+                                                    <p>Data di scadenza della Tessera Sanitaria:</p>
+                                                    <p id="modalidentificationExpirationDate" class="font-weight-bold">{{ params.user_detail.identificationExpirationDate }} </p>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="row pt-5">
+                                                <div class="col-lg-3">
+                                                    <p>Data di nascita:</p>
+                                                    <p id="modalDateOfBirth" class="font-weight-bold">{{ params.user_detail.dateOfBirth }} </p>
+                                                </div>
+
+                                                <div class="col-lg-3">
+                                                    <p style="font-size: 14px;">Nazione di nascita:</p>
+                                                    <p id="modalNationOfBirth"  class="font-weight-bold"> {{ params.user_detail.nationOfBirth.name }}</p>
+                                                </div>
+                                                <div class="col-lg-3">
+                                                    <p style="font-size: 14px;">Provincia di nascita:</p>
+                                                    <p id="formProvince" class="font-weight-bold"> {{ params.user_detail.countyOfBirth.name }} </p>
+                                                </div>
+                                                <div class="col-lg-3">
+                                                    <p style="font-size: 14px;">Comune di nascita:</p>
+                                                    <p id="formPlace" class="font-weight-bold">{{ params.user_detail.placeOfBirth.name }}</p>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="collapse-header" id="headingA5">
+                                        <button type="button" data-toggle="collapse" data-target="#accordion5" aria-expanded="false" aria-controls="accordion5">
+                                            Recapiti e indirizzi*
+                                        </button>
+                                    </div>
+                                    <div id="accordion5" class="collapse show" role="tabpanel" aria-labelledby="headingA5" >
+                                        <div class="collapse-body">
+
+
+                                            <div class="row pt-1">
+                                                <div class="col-lg-4">
+                                                    <p>Email:</p>
+                                                    <p id="modalEmail" class="font-weight-bold">{{ params.user_detail.email }} </p>
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>Numero di telefono:</p>
+                                                    <p id="modalTelephone" class="font-weight-bold">{{ params.user_detail.countryCallingCode }}  {{ params.user_detail.phoneNumber }}</p>
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>Indirizzo PEC:</p>
+                                                    <p id="modalPec" class="font-weight-bold">{% if params.user_detail.pec == None %} Nessun indirizzo inserito {% else %} {{ params.user_detail.pec }} {% endif %}</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="row pt-5">
+                                                <p>Indirizzo: </p>
+                                            </div>
+                                            <div class="row">
+
+                                                <p id="modalAddress" class="font-weight-bold">{{ params.user_detail.addressType }}
+                                                    {{ params.user_detail.addressName }}, {{ params.user_detail.addressNumber }}
+                                                    - {{ params.user_detail.addressPostalCode }},
+                                                    {% if params.user_detail.addressNation.code == 'Z000' %}
+                                                    {{ params.user_detail.addressMunicipality.name }}, {{ params.user_detail.addressCountry.name }},
+                                                    {% endif %}
+                                                    {{ params.user_detail.addressNation.name }}
+                                                </p>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="collapse-header" id="headingA6">
+                                        <button type="button" data-toggle="collapse" data-target="#accordion6" aria-expanded="false" aria-controls="accordion6">
+                                            Documenti*
+                                        </button>
+                                    </div>
+
+                                    <div id="accordion6" class="collapse show" role="tabpanel" aria-labelledby="headingA6" >
+                                        <div class="collapse-body">
+                                            <div class="row">
+                                                <div class="col-lg-4">
+                                                    <p>Tipo documento:</p>
+                                                    {% if 'cartaIdentita' in params.user_detail.idCardType %} <p class="font-weight-bold">Carta d'Identit&aacute;</p>{% endif %}
+                                                    {% if 'passaporto' in params.user_detail.idCardType %} <p class="font-weight-bold">Passaporto</p>{% endif %}
+                                                    {% if 'patenteGuida' in params.user_detail.idCardType %} <p class="font-weight-bold">Patente di Guida</p>{% endif %}
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>Numero documento:</p>
+                                                    <p id="modalDocNumber" class="font-weight-bold"> {{ params.user_detail.idCardDocNumber }}  </p>
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>Rilasciato da:</p>
+                                                    <p id="modalDocRelease" class="font-weight-bold">{% if params.user_detail.idCardIssuer == "ministeroTrasporti" %} Ministero dei Trasporti {% else %} {{ params.user_detail.idCardIssuer }} {% endif %} </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="row pt-5">
+                                                <div class="col-lg-4">
+                                                    <p>Data di rilascio del doc.:</p>
+                                                    <p id="modalReleaseDate" class="font-weight-bold">{{ params.user_detail.idCardIssueDate }} </p>
+
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>Data di scadenza del doc.:</p>
+                                                    <p id="modalExpirationDate" class="font-weight-bold">{{ params.user_detail.idCardExpirationDate }} </p>
+                                                </div>
+
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+
+
+
+
+                                    <div class="row pt-2 pb-2 ">
+                                        <div class="col-md-6 d-flex align-items-center ">
+
+                                            <p >Inserisci il PIN del tuo sistema di Firma:</p>
+                                        </div>
+                                        <div class="input-group col-md-6">
+
+                                            <input type="password" autocomplete="PIN"
+                                                   class="form-control col-12 input-password" id="pinField"
+                                                   oncopy="return false" onpaste="return false"
+                                                   name="pinField" aria-describedby="PINHelp"
+                                                   placeholder="PIN di conferma">
+                                            <div class="input-group-append password-icon"
+                                                 title="Mostra/Nascondi PIN">
+                                                <svg class="password-icon-visible icon icon-sm">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-visible"></use>
+                                                </svg>
+                                                <svg class="password-icon-invisible icon icon-sm d-none">
+                                                    <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-password-invisible"></use>
+                                                </svg>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
+
+                            <div class="modal-footer">
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal">Annulla</button>
+                                <input class="btn btn-primary btn-sm" type="submit" value="Identifica utente"
+                                       onclick="enable_autopopulate_fields()" name="identifica">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+
+
+            <div id="accordionDiv1" class="collapse-div" role="tablist">
+                <div class="collapse-header" id="headingA1">
+                    <button type="button" data-toggle="collapse" data-target="#accordion1" aria-expanded="true"
+                            aria-controls="accordion1">
+                        Anagrafica*
+                    </button>
+                </div>
+
+                <div id="accordion1" class="collapse show" role="tabpanel" aria-labelledby="headingA1">
+                    <div class="collapse-body">
+                        <div class="form-row">
+
+                            <div class="form-group col-lg-4">
+                                <input type="text" class="form-control" id="fiscalNumber" name="fiscalNumber" autocomplete="0"
+                                       aria-describedby="fiscalNumberHelp" {% if form.fiscalNumber.value %}
+                                       value="{{ form.fiscalNumber.value }}" {% endif %}>
+                                <label for="fiscalNumber">Codice Fiscale*</label>
+                                <small id="fiscalNumberHelp"
+                                       class="form-text text-danger"> {{ form.fiscalNumber.errors }} </small>
+                            </div>
+
+                            <div class="form-group col-lg-4 ">
+                                <input type="text" class="form-control" id="name" name="name" autocomplete="0"
+                                       aria-describedby="nameHelp" {% if form.name.value %}
+                                       value="{{ form.name.value }}" {% endif %}>
+                                <label for="name">Nome*</label>
+                                <small id="nameHelp" class="form-text text-danger">{{ form.name.errors }}</small>
+                            </div>
+
+                            <div class="form-group col-lg-4">
+                                <input type="text" class="form-control" id="familyName" name="familyName" autocomplete="0"
+                                       aria-describedby="familyNameHelp" {% if form.familyName.value %}
+                                       value="{{ form.familyName.value }}" {% endif %}>
+                                <label for="familyName">Cognome*</label>
+                                <small id="familyNameHelp"
+                                       class="form-text  text-danger">{{ form.familyName.errors }}</small>
+                            </div>
+
+
+                        </div>
+
+                        <div class="form-row">
+
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="gender" name="gender" title="Sesso*" aria-describedby="genderHelp">
+                                        <option {% if form.gender.value == 'M' %} selected {% endif %} value="M">
+                                        Maschio
+                                        </option>
+                                        <option {% if form.gender.value == 'F' %} selected {% endif %} value="F">
+                                        Femmina
+                                        </option>
+
+                                    </select>
+                                    <small id="genderHelp"
+                                           class="form-text  text-danger">{{ form.gender.errors }}</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-lg-5">
+                                <input type="text" class="form-control" id="identificationSerialCode" autocomplete="0"
+                                       name="identificationSerialCode"
+                                       aria-describedby="identificationSerialCodeHelp"
+                                       {% if form.identificationSerialCode.value %}
+                                       value="{{ form.identificationSerialCode.value }}" {% endif %}>
+                                <label for="identificationSerialCode">Numero di identificazione tessera sanitaria*</label>
+                                <small id="identificationSerialCodeHelp"
+                                       class="form-text  text-danger">{{ form.identificationSerialCode.errors }}</small>
+                            </div>
+                            <div class="form-group col-lg-4">
+                                <div class="it-datepicker-wrapper">
+                                    <div class="form-group">
+                                        <label for="identificationExpirationDate"></label>
+                                        <input class="form-control it-date-datepicker" id="identificationExpirationDate" autocomplete="0"
+                                               name="identificationExpirationDate" type="text" placeholder="Data di scadenza*"
+                                               aria-describedby="identificationExpirationDateHelp" {% if form.identificationExpirationDate.value %}
+                                               value="{{ form.identificationExpirationDate.value }}" {% endif %}>
+                                        <small id="identificationExpirationDateHelp"
+                                               class="form-text  text-danger">{{ form.identificationExpirationDate.errors }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-lg-3">
+                                <div class="it-datepicker-wrapper">
+                                    <div class="form-group">
+                                        <label for="dateOfBirth"></label>
+                                        <input class="form-control it-date-datepicker" id="dateOfBirth" autocomplete="0"
+                                               name="dateOfBirth" type="text" placeholder="Data di nascita*"
+                                               aria-describedby="dateOfBirthHelp" {% if form.dateOfBirth.value %}
+                                               value="{{ form.dateOfBirth.value }}" {% endif %}>
+                                        <small id="dateOfBirthHelp"
+                                               class="form-text  text-danger"> {{ form.dateOfBirth.errors }} </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="nationOfBirth" name="nationOfBirth" title="Nazione di nascita*"
+                                            aria-describedby="nationOfBirthHelp" data-live-search="true"
+                                            data-live-search-placeholder="Cerca la tua nazione">
+                                    </select>
+                                    <small id="nationOfBirthHelp"
+                                           class="form-text  text-danger"> {{ form.nationOfBirth.errors }}</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="countyOfBirth" name="countyOfBirth" title="Provincia di nascita*"
+                                            aria-describedby="countyOfBirthHelp" data-live-search="true"
+                                            data-live-search-placeholder="Cerca la tua provincia">
+                                    </select>
+                                    <small id="countyOfBirthHelp"
+                                           class="form-text  text-danger">{{ form.countyOfBirth.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="placeOfBirth" name="placeOfBirth" title="Comune di nascita*"
+                                            aria-describedby="placeOfBirthHelp" data-live-search="true"
+                                            data-live-search-placeholder="Cerca il tuo comune">
+                                    </select>
+                                    <small id="placeOfBirthHelp"
+                                           class="form-text  text-danger"> {{ form.placeOfBirth.errors }}</small>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="collapse-header" id="headingA2">
+                    <button type="button" data-toggle="collapse" data-target="#accordion2" aria-expanded="false"
+                            aria-controls="accordion2">
+                        Recapiti e indirizzi*
+                    </button>
+                </div>
+                <div id="accordion2" class="collapse show" role="tabpanel" aria-labelledby="headingA2">
+                    <div class="collapse-body">
+
+                        <div class="row">
+                            <h4><span>Recapiti</span></h4>
+                        </div>
+                        <div class="form-row pt-5">
+                            <div class="form-group col-lg-6">
+                                <input type="text" class="form-control" id="email" name="email" autocomplete="0"
+                                       oncopy="return false" onpaste="return false"
+                                       aria-describedby="emailHelp"  {% if form.email.value %}
+                                       value="{{ form.email.value }}" {% endif %}>
+                                <label for="email">Indirizzo email*</label>
+                                <small id="emailHelp"
+                                       class="form-text  text-danger"> {{ form.email.errors }} </small>
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <input type="text" class="form-control" id="confirmEmail"  name="confirmEmail" autocomplete="0"
+                                       oncopy="return false" onpaste="return false"
+                                       aria-describedby="confirmEmailHelp"  {% if form.confirmEmail.value %}
+                                       value="{{ form.confirmEmail.value }}" {% endif %}>
+                                <label for="confirmEmail">Conferma indirizzo email*</label>
+                                <small id="confirmEmailHelp"
+                                       class="form-text text-danger"> {{ form.confirmEmail.errors }}</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-lg-2">
+                                <div class="bootstrap-select-wrapper">
+                                    {{ form.countryCallingCode }}
+                                    <small id="countryCallingCodeHelp"
+                                           class="form-text text-danger">{{ form.countryCallingCode.errors }} </small>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group col-lg-5">
+                                <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" autocomplete="0"
+                                       oncopy="return false" onpaste="return false"
+                                       aria-describedby="phoneNumberHelp"  {% if form.phoneNumber.value %}
+                                       value="{{ form.phoneNumber.value }}" {% endif %}>
+                                <label for="phoneNumber">Numero di cellulare*</label>
+                                <small id="phoneNumberHelp"
+                                       class="form-text  text-danger"> {{ form.phoneNumber.errors }} </small>
+                            </div>
+
+                            <div class="form-group col-lg-5">
+                                <input type="text" class="form-control" id="confirmPhoneNumber" autocomplete="0"
+                                       oncopy="return false" onpaste="return false"
+                                       name="confirmPhoneNumber" aria-describedby="confirmPhoneNumberHelp"
+                                       {% if form.confirmPhoneNumber.value %}
+                                       value="{{ form.confirmPhoneNumber.value }}" {% endif %}>
+                                <label for="confirmPhoneNumber">Conferma numero di cellulare*</label>
+                                <small id="confirmPhoneNumberHelp"
+                                       class="form-text  text-danger">{{ form.confirmPhoneNumber.errors }} </small>
+                            </div>
+                        </div>
+
+                        <div class="form-row pt-3">
+
+                            <div class="form-group col-lg-6">
+                                <input type="text" class="form-control" id="formPEC" name="formPEC" autocomplete="0"
+                                       aria-describedby="formPECHelp"  {% if form.formPEC.value %}
+                                       value="{{ form.formPEC.value }}" {% endif %}>
+                                <label for="formPEC">Indirizzo PEC</label>
+                                <small id="formPECHelp"
+                                       class="form-text  text-danger"> {{ form.formPEC.errors }} </small>
+                            </div>
+                        </div>
+                        <div class="row pt-5">
+                            <h4><span>Domicilio</span></h4>
+                        </div>
+
+                        <div class="form-row pt-1">
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="addressType" name="addressType" title="Tipo*"
+                                            aria-describedby="addressTypeHelp">
+                                        <option {% if form.addressType.value == 'Via' %} selected {% endif %}
+                                        value="Via">Via
+                                        </option>
+                                        <option {% if form.addressType.value == 'Viale' %} selected {% endif %}
+                                        value="Viale">Viale
+                                        </option>
+                                        <option {% if form.addressType.value == 'Vicolo' %} selected {% endif %}
+                                        value="Vicolo">Vicolo
+                                        </option>
+                                        <option {% if form.addressType.value == 'Strada' %} selected {% endif %}
+                                        value="Strada">Strada
+                                        </option>
+                                        <option {% if form.addressType.value == 'Piazza' %} selected {% endif %}
+                                        value="Piazza">Piazza
+                                        </option>
+                                        <option {% if form.addressType.value == 'Piazzale' %} selected {% endif %}
+                                        value="Piazzale">
+                                        Piazzale
+                                        </option>
+                                        <option {% if form.addressType.value == 'Largo' %} selected {% endif %}
+                                        value="Largo">Largo
+                                        </option>
+                                        <option {% if form.addressType.value == 'Corso' %} selected {% endif %}
+                                        value="Corso">Corso
+                                        </option>
+                                        <option {% if form.addressType.value == 'Contrada' %} selected {% endif %}
+                                        value="Contrada">
+                                        Contrada
+                                        </option>
+                                        <option {% if form.addressType.value == 'Altro' %} selected {% endif %}
+                                        value="Altro">Altro
+                                        </option>
+                                    </select>
+                                    <small id="addressTypeHelp"
+                                           class="form-text  text-danger"> {{ form.addressType.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <input type="text" class="form-control" id="addressName" name="addressName" autocomplete="0"
+                                       aria-describedby="addressNameHelp"  {% if form.addressName.value %}
+                                       value="{{ form.addressName.value }}" {% endif %}>
+                                <label for="addressName">Indirizzo domicilio*</label>
+                                <small id="addressNameHelp"
+                                       class="form-text  text-danger"> {{ form.addressName.errors }} </small>
+                            </div>
+                            <div class="form-group col-lg-3">
+                                <input type="text" class="form-control" id="addressNumber" name="addressNumber" autocomplete="0"
+                                       aria-describedby="addressNumberHelp"  {% if form.addressNumber.value %}
+                                       value="{{ form.addressNumber.value }}" {% endif %}>
+                                <label for="addressNumber">Numero civico*</label>
+                                <small id="addressNumberHelp"
+                                       class="form-text  text-danger"> {{ form.addressNumber.errors }}</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-lg-2">
+                                <input type="text" class="form-control" id="addressPostalCode" autocomplete="0"
+                                       name="addressPostalCode" aria-describedby="addressPostalCodeHelp"
+                                       {% if form.addressPostalCode.value %}
+                                       value="{{ form.addressPostalCode.value }}" {% endif %}>
+                                <label for="addressPostalCode">CAP*</label>
+                                <small id="addressPostalCodeHelp"
+                                       class="form-text  text-danger">{{ form.addressPostalCode.errors }} </small>
+                            </div>
+                            <div class="form-group col-lg-4">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="addressNation" name="addressNation" title="Nazione di domicilio*"
+                                            aria-describedby="addressNationHelp" data-live-search="true"
+                                            data-live-search-placeholder="Cerca la tua nazione">
+                                    </select>
+                                    <small id="addressNationHelp"
+                                           class="form-text text-danger">{{ form.addressNation.errors }} </small>
+                                </div>
+                            </div>
+
+
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="addressCountry" name="addressCountry" autocomplete="0"
+                                            title="Provincia di domicilio*" aria-describedby="addressCountryHelp"
+                                            data-live-search="true"
+                                            data-live-search-placeholder="Cerca la tua provincia">
+                                    </select>
+                                    <small id="addressCountryHelp"
+                                           class="form-text  text-danger">{{ form.addressCountry.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-group col-lg-3">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="addressMunicipality" name="addressMunicipality"
+                                            title="Comune di domicilio*" aria-describedby="addressMunicipalityHelp"
+                                            data-live-search="true"
+                                            data-live-search-placeholder="Cerca il tuo comune">
+                                    </select>
+                                    <small id="addressMunicipalityHelp"
+                                           class="form-text  text-danger">{{ form.addressMunicipality.errors }} </small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="collapse-header" id="headingA3">
+                    <button type="button" data-toggle="collapse" data-target="#accordion3" aria-expanded="false"
+                            aria-controls="accordion3">
+                        Documenti*
+                    </button>
+                </div>
+
+                <div id="accordion3" class="collapse show" role="tabpanel" aria-labelledby="headingA3">
+                    <div class="collapse-body">
+
+
+                        <div class="form-row">
+                            <div class="form-group col-lg-4">
+                                <div class="bootstrap-select-wrapper">
+                                    <select id="idCardType" name="idCardType" title="Tipo*"
+                                            aria-describedby="idCardTypeHelp">
+                                        <option {% if form.idCardType.value == 'cartaIdentita' %}
+                                        selected {% endif %} value="cartaIdentita">Carta d'Identit&aacute;
+                                        </option>
+                                        <option {% if form.idCardType.value == 'passaporto' %} selected {% endif %}
+                                        value="passaporto">
+                                        Passaporto
+                                        </option>
+                                        <option {% if form.idCardType.value == 'patenteGuida' %}
+                                        selected {% endif %} value="patenteGuida">Patente di Guida
+                                        </option>
+                                    </select>
+                                    <small id="idCardTypeHelp"
+                                           class="form-text text-danger">{{ form.idCardType.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-group col-lg-8">
+                                <input type="text" class="form-control" id="idCardDocNumber" name="idCardDocNumber" autocomplete="0"
+                                       aria-describedby="idCardDocNumberHelp"  {% if form.idCardDocNumber.value %}
+                                       value="{{ form.idCardDocNumber.value }}" {% endif %}>
+                                <label for="idCardDocNumber">Inserisci il numero del tuo documento*</label>
+                                <small id="idCardDocNumberHelp"
+                                       class="form-text  text-danger">{{ form.idCardDocNumber.errors }} </small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-lg-4">
+                                <div class="bootstrap-select-wrapper">
+                                    {{ form.typeDocRelease }}
+                                    <small id="typeDocReleaseHelp"
+                                           class="form-text text-danger">{{ form.typeDocRelease.errors }} </small>
+                                </div>
+                            </div>
+                            <div class="form-group col-lg-8">
+                                <input type="text" class="form-control" id="idCardIssuer" name="idCardIssuer" autocomplete="0"
+                                       aria-describedby="idCardIssuerHelp" {% if form.idCardIssuer.value %}
+                                       value="{{ form.idCardIssuer.value }}" {% endif %}>
+                                <label for="idCardIssuer">Di...*</label>
+                                <small id="idCardIssuerHelp"
+                                       class="form-text  text-danger">{{ form.idCardIssuer.errors }} </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-row">
+                            <div class="form-group col-lg-6">
+                                <label for="idCardIssueDate"></label>
+                                <div class="it-datepicker-wrapper">
+                                    <div class="form-group">
+                                        <input class="form-control it-date-datepicker" id="idCardIssueDate" autocomplete="0"
+                                               name="idCardIssueDate" type="text" placeholder="Data rilascio*"
+                                               aria-describedby="idCardIssueDateHelp"
+                                               {% if form.idCardIssueDate.value %}
+                                               value="{{ form.idCardIssueDate.value }}" {% endif %}>
+                                        <small id="idCardIssueDateHelp"
+                                               class="form-text  text-danger">{{ form.idCardIssueDate.errors }} </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group col-lg-6">
+                                <label for="idCardExpirationDate"></label>
+                                <div class="it-datepicker-wrapper">
+                                    <div class="form-group">
+                                        <input class="form-control it-date-datepicker" id="idCardExpirationDate" autocomplete="0"
+                                               name="idCardExpirationDate" type="text" placeholder="Data scadenza*"
+                                               aria-describedby="idCardExpirationDateHelp"
+                                               {% if form.idCardExpirationDate.value %}
+                                               value="{{ form.idCardExpirationDate.value }}" {% endif %}>
+                                        <small id="idCardExpirationDateHelp"
+                                               class="form-text  text-danger">{{ form.idCardExpirationDate.errors }} </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="d-flex justify-content-center pt-5">
+                <button type="submit" style="width: 300px;" class="btn btn-primary" onclick="enable_autopopulate_fields()"
+                        title="Aggiungi">Aggiungi richiesta
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
+{% block bl_javascripts %}
+    <script id="script_tag" data_is_form={% if form.nationOfBirth.value %}true{% else %}false{% endif %}
+            data_modal_message={% if params.modal_message %}true{% else %}false{% endif %}
+            data_user_detail={% if params.user_detail %}true{% else %}false{% endif %}
+            {% if form.nationOfBirth.value %}
+                data_nationOfBirth_value = '{{ form.nationOfBirth.value }}'
+                data_countyOfBirth_value = '{{ form.countyOfBirth.value }}'
+                data_placeOfBirth_value = '{{ form.placeOfBirth.value }}'
+                data_addressNation_value = '{{ form.addressNation.value }}'
+                data_addressCountry_value = '{{ form.addressCountry.value }}'
+                data_addressMunicipality_value = '{{ form.addressMunicipality.value }}'
+            {% endif %}
+            src="{% static "rao/agency/js/add_identity.js" %}"></script>
+
+<script>
+function enable_autopopulate_fields() {
+
+    document.getElementById("nationOfBirth").disabled = false;
+    document.getElementById("countyOfBirth").disabled = false;
+    document.getElementById("placeOfBirth").disabled = false;
+    document.getElementById("dateOfBirth").disabled = false;
+    document.getElementById("gender").disabled = false;
+}
+</script>
+
+{% endblock %}
+
