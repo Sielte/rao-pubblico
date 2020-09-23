@@ -211,7 +211,11 @@ def _download_http_crl(endpoint, key_identifier):
     try:
         r = requests.get(endpoint)
         if r.status_code == 200:
-            crl = crypto.load_crl(crypto.FILETYPE_PEM, r.content)
+            try:
+                crl = crypto.load_crl(crypto.FILETYPE_PEM, r.content)
+            except:
+                crl_x509 = x509.load_der_x509_crl(r.content, default_backend())
+                crl = crypto.CRL.from_cryptography(crl_x509)
             with open(crl_dest, 'w') as f:
                 f.write(crypto.dump_crl(crypto.FILETYPE_PEM, crl).decode())
             with open(crl_meta_dest, 'w') as f:
