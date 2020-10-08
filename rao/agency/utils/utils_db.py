@@ -29,6 +29,7 @@ from agency.utils.mail_utils import send_email
 from django.conf import settings
 
 from agency.utils.utils_api import create_api, reset_pin_api, disable_operator_api
+from rao.settings import BASE_URL
 
 LOG = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ def disable_operator(request, page, t):
             operator.status = False
             operator.save()
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
 
     return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
@@ -130,7 +131,7 @@ def reset_pin_operator(request, page, t):
                     params_t['operator'] = request.POST.get('username_op')
                     t = signing.dumps(params_t)
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
 
     return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
@@ -189,6 +190,7 @@ def send_recovery_link(username):
                 t = signing.dumps(params)
 
                 mail_elements = {
+                    'base_url': BASE_URL,
                     'nameUser': operator.name,
                     'familyNameUser': operator.surname,
                     'rao_name': rao.name
@@ -204,7 +206,7 @@ def send_recovery_link(username):
                 return StatusCode.ERROR.value
         return StatusCode.NOT_FOUND.value
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.EXC.value
 
 
@@ -223,7 +225,7 @@ def update_status_operator(username, status=True):
             operator.save()
             return StatusCode.OK.value
     except Exception as e:
-        LOG.error("[{}] Si è verificato un errore durante l'update dello stato operatore: {}".format(username, str(e)))
+        LOG.warning("[{}] Si è verificato un errore durante l'update dello stato operatore: {}".format(username, str(e)))
         return StatusCode.EXC.value
 
     return StatusCode.ERROR.value
@@ -240,7 +242,7 @@ def get_status_operator(username):
         if operator:
             return operator.status
     except Exception as e:
-        LOG.error("[{}] Si è verificato un errore durante il recupero dello status: {}".format(username, str(e)))
+        LOG.warning("[{}] Si è verificato un errore durante il recupero dello status: {}".format(username, str(e)))
         return False
 
     return False
@@ -270,7 +272,7 @@ def update_password_operator(username, new_password, status=True):
             operator.save()
             return StatusCode.OK.value
     except Exception as e:
-        LOG.error("[{}] Si è verificato un errore durante l'update della password: {}".formt(username, str(e)))
+        LOG.warning("[{}] Si è verificato un errore durante l'update della password: {}".formt(username, str(e)))
         return StatusCode.EXC.value
 
     return StatusCode.ERROR.value
@@ -300,7 +302,7 @@ def create_operator(admin_username, operator):
                                                status=False)
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.ERROR.value, None
 
     try:
@@ -321,6 +323,7 @@ def create_operator(admin_username, operator):
 
         rao = get_attributes_RAO()
         mail_elements = {
+            'base_url': BASE_URL,
             'nameUser': new_operator.name,
             'familyNameUser': new_operator.surname,
             'rao_name': rao.name,
@@ -337,7 +340,7 @@ def create_operator(admin_username, operator):
         if not mail_sended:
             return StatusCode.BAD_REQUEST.value, None
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.EXC.value, None
     return StatusCode.OK.value, op_temporary_pin
 
@@ -353,7 +356,7 @@ def create_identity(request, id_operator):
         user = UserDetail(request.POST, id_operator)
         return user
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return None
 
 
@@ -377,12 +380,11 @@ def create_identity_request(request, identity):
                                              status=RequestStatus.IDENTIFIED,
                                              timestamp_identification=datetime.datetime.utcnow(),
                                              token=token_user)
-
                 id_request.save()
 
                 return id_request
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
     return None
 
 
@@ -415,7 +417,7 @@ def create_token_user():
         token_user = TokenUser(timestamp_creation=datetime.datetime.utcnow())
         token_user.save()
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
     return token_user
 
 
@@ -458,7 +460,7 @@ def search_filter(string, tab, operator=None):
                     Q(idOperator__name__icontains=string) | Q(idOperator__surname__icontains=string))
             return identity
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return None
 
 
@@ -491,7 +493,7 @@ def get_identification_report(days=4, week=0):
                     i -= 1
         return report
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return []
 
 
@@ -518,7 +520,7 @@ def get_weekly_identification_report(request):
         return JsonResponse({'statusCode': StatusCode.OK.value, 'date': date, 'num_identified': num_identified})
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
 
@@ -619,6 +621,7 @@ def resend_mail_activation(request, page, t):
 
                     rao = get_attributes_RAO()
                     mail_elements = {
+                        'base_url': BASE_URL,
                         'nameUser': operator.name,
                         'familyNameUser': operator.surname,
                         'rao_name': rao.name,
@@ -634,7 +637,7 @@ def resend_mail_activation(request, page, t):
                                 'mail_elements': mail_elements})
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
 
     return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
@@ -663,6 +666,7 @@ def update_emailrao(op, rao_name, rao_email, rao_host, rao_pwd, email_crypto_typ
             tmp_settings = TempMailSettings(smtp_mail_from, rao_email, rao_host, password=password, email_port=email_port,
                                             email_crypto_type=email_crypto_type)
             mail_elements = {
+                'base_url': BASE_URL,
                 'nameUser': op.name,
                 'familyNameUser': op.surname,
                 'rao_name': rao_name
@@ -685,7 +689,7 @@ def update_emailrao(op, rao_name, rao_email, rao_host, rao_pwd, email_crypto_typ
                 return False
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning('exception_value = %s, value = %s' % (value, type,))
+        LOG.warning('tb = %s' % traceback.format_exception(type, value, tb))
     return False

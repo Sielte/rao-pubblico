@@ -177,4 +177,4 @@ SECRET_KEY_ENC = os.environ.get('SECRET_KEY_ENC', os.urandom(24))
 
 CRL_PATH = os.environ.get('CRL_PATH', 'data/')
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"

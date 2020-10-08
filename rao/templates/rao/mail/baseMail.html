@@ -1,6 +1,6 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!doctype html>
 {% load static %}
-<html xmlns:v="urn:schemas-microsoft-com:vml">
+<html>
 
 <head>
 
@@ -151,7 +151,6 @@
                     <td align="center" class="main-header">
 
                         <div style="line-height: 35px">
-
                             <h1 class="blueitalia" style="text-align:center;">{% block header_name %}{% endblock %}</h1>
 
                         </div>
@@ -224,8 +223,8 @@
                             <tr>
                                 <td align="left" style="color: #0066cc;line-height: 24px;">
                                     <div style="line-height: 24px;">
-                                        <span style="color: #ffffff;">{% block comune %}{% endblock %}</span>
-
+                                        <span style="color: #ffffff;">{% block comune %}{% endblock %}
+                                        </span>
                                     </div>
                                 </td>
                             </tr>
@@ -240,6 +239,7 @@
 
     <tr>
         <td height="25" style="font-size: 25px; line-height: 25px;">&nbsp;</td>
+
     </tr>
 
 </table>

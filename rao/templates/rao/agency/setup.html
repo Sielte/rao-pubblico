@@ -18,24 +18,39 @@
                 </div>
                 <div id="accordion1" class="collapse show " role="tabpanel" aria-labelledby="headingA1">
                     <div class="collapse-body ">
-                        <div class="row d-flex justify-content-center">
-                            <label class="custom-file-label" > Carica il file (certificato) .pem che ti è stato fornito.
-                            </label>
-                        </div>
+                        <div class="row ">
+                            <div class="col-lg-6 mx-auto" >
+                                <label class="custom-file-label" >
+                                    Carica il Certificato che ti è stato fornito.
+                                    Il Certificato è solitamente un file con estensione .crt oppure .cer
+                                </label>
+                                {{ form_cert.uploadCertificate }}
 
-                        <div class="row d-flex justify-content-center" >
-                            {{ form_cert.uploadCertificate }}
-                        </div>
-                        <div class="row d-flex justify-content-center" >
-                            <small id="uploadCertificate"
-                                   class="form-text text-danger">{{ form_cert.uploadCertificate.errors }}</small>
-                        </div>
-                            <div class="pt-2 d-flex justify-content-center ">
-
-                                <p >Inserisci il PIN del tuo sistema di Firma:</p>
+                                <small id="uploadCertificate"
+                                       class="form-text text-danger pb-5">{{ form_cert.uploadCertificate.errors }}</small>
                             </div>
-                        <div class="row d-flex justify-content-center">
-                            <div class="input-group col-6 col-md-4">
+                        </div>
+                        <div class="row ">
+                            <div class="col-lg-6 mx-auto" >
+                                <label class="custom-file-label" >Carica la tua Chiave Privata.
+                                    La Chiave Privata è stata generata per effettuare la richiesta del Certificato ad AgiD.
+                                </label>
+                                {{ form_cert.uploadPrivateKey }}
+                                <small id="uploadPrivateKey"
+                                       class="form-text text-danger pb-5">{{ form_cert.uploadPrivateKey.errors }}</small>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row ">
+                            <div class="col-lg-6 mx-auto" >
+
+                            <p >Inserisci il PIN del tuo sistema di Firma:</p>
+                            </div>
+                        </div>
+                        <div class="row ">
+                            <div class="input-group col-lg-6 mx-auto">
 
                                 <input type="password" autocomplete="PIN"
                                        class="form-control col-12 input-password" id="pinField"

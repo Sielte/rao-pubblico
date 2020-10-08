@@ -122,19 +122,28 @@
                             </div>
 
 {% if params.is_admin %}
-                            <div class="row ">
-                                <div class="col-sm-6 mx-auto" >
-                                    <label class="custom-file-label text-white" > Carica il file (certificato) .pem che ti è stato fornito.
+                                                    <div class="row ">
+                            <div class="col-lg-6 mx-auto" >
+                                <label class="custom-file-label text-white" >
+                                    Carica il Certificato che ti è stato fornito.
+                                    Il Certificato è solitamente un file con estensione .crt oppure .cer
+                                </label>
+                                {{ form.uploadCertificate }}
 
-
-                                    </label>
-
-                                    {{ form.uploadCertificate }}
-
-                                        <small id="uploadCertificate"
-                                               class="form-text text-danger">{{ form.uploadCertificate.errors }}</small>
-                                </div>
+                                <small id="uploadCertificate"
+                                       class="form-text text-danger pb-5">{{ form.uploadCertificate.errors }}</small>
                             </div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-lg-6 mx-auto" >
+                                <label class="custom-file-label text-white" >Carica la tua Chiave Privata.
+                                    La Chiave Privata è stata generata per effettuare la richiesta del Certificato ad AgiD.
+                                </label>
+                                {{ form.uploadPrivateKey }}
+                                <small id="uploadPrivateKey"
+                                       class="form-text text-danger">{{ form.uploadPrivateKey.errors }}</small>
+                            </div>
+                        </div>
                         </div>
 {% endif %}
 

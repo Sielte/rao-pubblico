@@ -125,34 +125,34 @@
 
 {% block bl_javascripts %}
 <script>
-        {% if request.session.setup_ok %}
+        {% if request.session.setup_ok_redirect %}
             document.getElementById("change_title_modal").innerHTML = "Configurazione completata";
             document.getElementById("change_text_modal").innerHTML = "Configurazione completata con successo";
             $('#login-modal').modal('show')
 
-        {% elif request.session.pinChanged %}
+        {% elif request.session.pin_changed_redirect %}
             document.getElementById("change_title_modal").innerHTML = "PIN modificato";
             document.getElementById("change_text_modal").innerHTML = "PIN impostato correttamente";
             $('#login-modal').modal('show')
 
-        {% elif request.session.passwordChanged %}
+        {% elif request.session.password_changed_redirect %}
             document.getElementById("change_title_modal").innerHTML = "Password modificata";
             document.getElementById("change_text_modal").innerHTML = "Password modificata con successo";
             $('#login-modal').modal('show')
 
         {% endif %}
 
-        {% if request.session.setup_ok %}
-            del_key('setup_ok');
-            del_key('pinChanged');
-            del_key('passwordChanged');
+        {% if request.session.setup_ok_redirect %}
+            del_key('setup_ok_redirect');
+            del_key('pin_changed_redirect');
+            del_key('password_changed_redirect');
         {% endif %}
-        {% if request.session.pinChanged %}
-            del_key('pinChanged');
-            del_key('passwordChanged');
+        {% if request.session.pin_changed_redirect %}
+            del_key('pin_changed_redirect');
+            del_key('password_changed_redirect');
         {% endif %}
-        {% if request.session.passwordChanged %}
-            del_key('passwordChanged');
+        {% if request.session.password_changed_redirect %}
+            del_key('password_changed_redirect');
         {% endif %}
 
 

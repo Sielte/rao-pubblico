@@ -1,29 +1,57 @@
 {% extends "rao/mail/baseMail.html" %}
-
+{% load staticfiles %}
 {% block header_name %}
+<div>
     {{ mail_elements.rao_name }}
+</div>
 {% endblock %}
 
 
 {% block message_title_first %}
-Benvenuto {{mail_elements.nameUser}} {{mail_elements.familyNameUser}},
-<br>ecco la seconda parte del tuo Codice di Attivazione:
-{% endblock %}
+<p>
+Gentile {{mail_elements.name_user}} {{mail_elements.surname_user}},
+<br>
+Questo messaggio contiene le informazioni necessarie per ottenere la propria identit&agrave; digitale SPID.
+<br>
+L'operazione di riconoscimento &egrave; stata portata a termine presso il {{ mail_elements.rao_name }}
+dall'operatore {{ mail_elements.operator.name }} {{ mail_elements.operator.surname }} il giorno
+{{ mail_elements.timestamp }}, durante la quale ti &egrave; stata consegnata una ricevuta contenente la
+prima parte del codice di attivazione.
+<br>
+    La <u>seconda parte del codice di attivazione</u> &egrave; <span style="font-weight: bold; color: #06c">{{ passphrase2 }}</span>
+    </p>
 
-
-{% block message %}
-    <span>{{ passphrase2 }}</span>
 {% endblock %}
 
 {% block message_title_second %}
-Conservala con cura, ti verr&aacute; richiesta in fase di rilascio dell'identit&aacute; digitale.<br>
-In allegato il tuo token identificativo. Lo dovrai caricare sul sito web dell'IdP sempre in fase di rilascio dell'identit&aacute; digitale.
+<p style="margin-bottom: 2.5em;">
+Per completare il processo devi selezionare un Gestore di Identit&agrave; da cui ottenere SPID, puoi consultare l'elenco
+dei Gestori attivi presso il sito ufficiale di SPID: https://www.spid.gov.it/richiedi-spid.
+<br>
+Segui il link dedicato al riconoscimento con il RAO Pubblico e tieni a portata il codice fiscale e il telefono
+cellulare di cui hai comunicato il numero.
+<br>
+Ti ricordiamo che puoi scegliere uno qualunque dei Gestori che aderiscono all'iniziativa.
+<br>
+La procedura sul sito del Gestore di identità prevede l'inserimento di alcuni dati identificativi e il caricamento
+del pacchetto di attivazione, che trovi allegato al presente messaggio di posta elettronica, e digitare il codice di
+attivazione, riunendo le due parti in tuo possesso, la prima presente nella ricevuta che hai ottenuto al momento
+dell'identificazione presso lo sportello pubblico e la seconda indicata pi&ugrave; sopra in questo messaggio.
+<br>
+Cominciamo? https://www.spid.gov.it/richiedi-spid
+<br>
+</p>
+<p style="margin-bottom: 2.5em;">Cordiali Saluti.</p>
+
+<p style="margin-bottom: 2.5em; font-style: italic;"> Questo &egrave; un messaggio automatico,
+    ti preghiamo di non rispondere a questa mail. </p>
+<br>
 {% endblock %}
 
 
 
 {% block comune %}
-    {{ mail_elements.rao_name }}
+   <h2>&nbsp; {{ mail_elements.rao_name }} </h2>
 {% endblock %}
 
    

@@ -16,6 +16,7 @@ from operator import add
 
 # Third-party app imports
 from codicefiscale import codicefiscale
+from dateutil import tz
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 # Core Django imports
@@ -83,16 +84,27 @@ def download_pdf(params, passphrase=None, pin=None):
     """
 
     op = get_operator_by_username(params['username'])
+
+    if 'timestamp' in params:
+        timestamp_to_datetime = datetime.datetime.strptime(params['timestamp'], '%Y-%m-%d %H:%M')
+        token_expiration_datetime = from_utc_to_local(timestamp_to_datetime) + datetime.timedelta(days=30)
+        token_expiration_datetime = token_expiration_datetime.strftime('%d/%m/%Y %H:%M')
+    else:
+        token_expiration_datetime = None
+
     context_dict = {
         'pagesize': 'A4',
         'RAO_name': get_attributes_RAO().name,
-        'name_operator': op.name,
-        'surname_operator': op.surname,
-        'timestamp': params['timestamp'] if 'timestamp' in params else None
+        'operator': op,
+        'token_expiration_date': token_expiration_datetime
     }
 
     if passphrase:
         context_dict['passphrase'] = passphrase
+        context_dict['pdf_object'] = params['pdf_object'] if 'pdf_object' in params else ""
+        context_dict['name_user'] = params['name_user'] if 'name_user' in params else ""
+        context_dict['surname_user'] = params['surname_user'] if 'surname_user' in params else ""
+
         template = get_template(settings.TEMPLATE_URL_PDF + 'pdf_template.html')
     else:
         context_dict['pin'] = pin
@@ -118,6 +130,18 @@ def date_converter(date_with_slash):
     """
     date_object = datetime.datetime.strptime(date_with_slash, '%d/%m/%Y')
     return date_object.strftime('%Y-%m-%d')
+
+
+def from_utc_to_local(utc_datetime):
+    """
+    Converte una datetime utc in un datetime locale
+    :param utc_datetime: datetime in uct
+    :return: datetime locale
+    """
+    local_date = utc_datetime.replace(tzinfo=tz.tzutc())
+    local_date = local_date.astimezone(tz.tzlocal())
+    return local_date
+
 
 
 def fix_name_surname(name_or_surname):
@@ -173,7 +197,7 @@ def delete_session_key(request):
             del request.session[key_name]
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
 
     return HttpResponse("Chiave Cancellata")
 
@@ -274,7 +298,7 @@ def check_operator(username, password, status):
             user.save()
             return StatusCode.ERROR.value
         except Exception as e:
-            LOG.debug('[{}] eccezione durante la verifica della password: {}', (username, e))
+            LOG.warning('[{}] eccezione durante la verifica della password: {}', (username, e))
     return StatusCode.ERROR.value
 
 
@@ -314,7 +338,7 @@ def get_certificate(crt):
         return cert
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
     return
 
 
@@ -336,7 +360,7 @@ def decode_fiscal_number(request):
                                  })
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return JsonResponse({'statusCode': StatusCode.EXC.value})
 
     return JsonResponse({'statusCode': StatusCode.ERROR.value})
@@ -375,7 +399,7 @@ def encrypt_data(payload, passphrase):
         token.add_recipient(key)
         return token.serialize(compact=True)
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return None
 
 

@@ -16,21 +16,21 @@
 
         h1.blueitalia{
             color: #06c;
+            text-align:center;
         }
-
-        h3.pad{
-            color: #06c;
+        body{
+            font-size: 13px
         }
     </style>
-    <title>Stampa password</title>
+    <title>Pin temporaneo operatore</title>
 </head>
 <body>
 
 <div>
-    <h1 class="blueitalia" style="text-align:center;">{{ RAO_name }}</h1>
+    <h1 class="blueitalia">{{ RAO_name }}</h1>
 </div>
 <div>
-    <p>Di seguito il pin temporaneo di 6 caratteri da consegnare all'operatore:</p><h3 class="pad" >{{ pin }}</h3>
+    <p>Di seguito il pin temporaneo di 6 caratteri da consegnare all'operatore:</p><h3 style="color: #06c;" >{{ pin }}</h3>
 </div>
 </body>
 </html>

@@ -130,7 +130,7 @@ def generate_ICRequestData(creation_time, user, rao, request_identity):
     return ICRequestData
 
 
-def token_sigillato(user, op_username, pin):
+def signed_token(user, op_username, pin):
     """
     Creazione token_sigillato
     :param user: dict contenente i dati dell'utente

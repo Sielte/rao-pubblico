@@ -92,9 +92,9 @@ def send_email(to_email, subject, template, data, attachment=None, attachment_na
             LOG.info('[%s] Mail con oggetto "%s" inviata - Connection: %s' % (to_email, subject, conn_label))
             return StatusCode.OK.value
         except Exception as e:
-            LOG.error('[%s] Errore nell\'invio della mail con oggetto "%s" - Connection: %s' % (
+            LOG.warning('[%s] Errore nell\'invio della mail con oggetto "%s" - Connection: %s' % (
                 to_email, subject, conn_label))
-            LOG.error("Exception: {}".format(str(e)))
+            LOG.warning("Exception: {}".format(str(e)))
             time.sleep(5)
             return StatusCode.EXC.value
 

@@ -38,7 +38,7 @@ def create_api(pin, admin_username, op_username):
             return StatusCode.OK.value, dic['message']
         return StatusCode.ERROR.value, -1
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.EXC.value, -1
 
 
@@ -68,7 +68,7 @@ def reset_pin_api(pin, admin_username, op_username):
             return StatusCode.OK.value, dic['message']
         return StatusCode.ERROR.value, -1
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.EXC.value, -1
 
 
@@ -99,7 +99,7 @@ def disable_operator_api(pin, admin_username, op_username):
         return StatusCode.ERROR.value
     except Exception as e:
         HttpResponse()
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.EXC.value
 
 
@@ -162,7 +162,7 @@ def update_cert(pin, admin_username, cert):
             return StatusCode.OK.value
         return StatusCode.ERROR.value
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
         return StatusCode.EXC.value
 
 

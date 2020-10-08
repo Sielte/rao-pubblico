@@ -242,7 +242,7 @@ def configuration_check():
             return False
         return True
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)))
     return False
 
 
@@ -267,8 +267,8 @@ def necessary_data_check():
         return True
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning('exception_value = %s, value = %s' % (value, type,))
+        LOG.warning('tb = %s' % traceback.format_exception(type, value, tb))
     return False
 

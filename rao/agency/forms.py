@@ -198,8 +198,13 @@ class ChangePinFileForm(Form):
                                   error_messages={'required': 'Campo obbligatorio!'},
                                   widget=FileInput(
                                       attrs={'id': 'uploadCertificate'}))
+    uploadPrivateKey = FileField(required=True,
+                                 error_messages={'required': 'Campo obbligatorio!'},
+                                 widget=FileInput(
+                                     attrs={'id': 'uploadPrivateKey'}))
 
     formPin = None
+    cert = None
 
     def clean_newPinField(self):
         self.formPin = self.cleaned_data.get('newPinField')
@@ -215,28 +220,45 @@ class ChangePinFileForm(Form):
         return
 
     def clean_uploadCertificate(self):
-        formUploadCertificate = self.cleaned_data.get('uploadCertificate')
-        if not formUploadCertificate:
+        uploadCertificate = self.cleaned_data.get('uploadCertificate')
+        if not uploadCertificate:
             raise ValidationError("Il certificato selezionato non è valido!")
-        cert = get_certificate(formUploadCertificate)
-        if not check_expiration_certificate(cert) and not verify_policy_certificate(cert):
-            LOG.error("Policy del certificato non valide o certificato scaduto")
+        self.cert = get_certificate(uploadCertificate)
+        if "BEGIN RSA PRIVATE KEY" in self.cert:
+            self.cert = None
+            LOG.debug("Chiave privata presente - Certificato non valido")
+            raise ValidationError("Il certificato non deve contenere la chiave privata!")
+        if not check_expiration_certificate(self.cert) or not verify_policy_certificate(self.cert):
+            LOG.debug("Policy del certificato non valide o certificato scaduto")
             raise ValidationError("Il certificato selezionato non è valido!")
-        result = verify_certificate_chain(cert)
+        result = verify_certificate_chain(self.cert)
         if result == StatusCode.ERROR.value:
             raise ValidationError("Il certificato selezionato non è valido!")
         if result == StatusCode.EXC.value or result == StatusCode.NOT_FOUND.value:
             raise ValidationError("Impossibile verificare il certificato selezionato!")
+        return
+
+    def clean_uploadPrivateKey(self):
+        uploadPrivateKey = self.cleaned_data.get('uploadPrivateKey')
+        if not self.cert:
+            raise ValidationError("Devi prima caricare il certificato!")
+        if not uploadPrivateKey:
+            raise ValidationError("La chiave privata selezionata non è valida!")
+        pk = get_certificate(uploadPrivateKey)
+        if "BEGIN CERTIFICATE" in pk:
+            LOG.debug("Certificato presente - Chiave privata non valida")
+            raise ValidationError("La chiave privata non deve contenere il certificato!")
+        cert = pk + "\n" + self.cert
         try:
             crypto.load_certificate(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            LOG.error("Exception: {}".format(str(e)))
-            raise ValidationError("Il certificato selezionato non è valido!")
+            LOG.warning("Exception: {}".format(str(e)))
+            raise ValidationError("La chiave privata selezionata non è valida!")
         try:
             crypto.load_privatekey(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            LOG.error("Exception: {}".format(str(e)))
-            raise ValidationError("Il certificato selezionato non è valido!")
+            LOG.warning("Exception: {}".format(str(e)))
+            raise ValidationError("La chiave privata selezionata non è valida!")
         return
 
 
@@ -325,7 +347,7 @@ class NewOperatorForm(Form):
             else:
                 raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
         except Exception as e:
-            LOG.error("Exception: {}".format(str(e)))
+            LOG.warning("Exception: {}".format(str(e)))
             raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
 
 
@@ -382,7 +404,7 @@ class NewOperatorPinForm(Form):
             else:
                 raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
         except Exception as e:
-            LOG.error("Exception: {}".format(str(e)))
+            LOG.warning("Exception: {}".format(str(e)))
             raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
 
 
@@ -590,7 +612,7 @@ class NewIdentityForm(Form):
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
         except Exception as e:
-            LOG.error("Exception: {}".format(str(e)))
+            LOG.warning("Exception: {}".format(str(e)))
             isvalid = False
 
         if not isvalid:
@@ -886,7 +908,7 @@ class NewIdentityPinForm(Form):
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
         except Exception as e:
-            LOG.error("Exception: {}".format(str(e)))
+            LOG.warning("Exception: {}".format(str(e)))
             isvalid = False
 
         if not isvalid:
@@ -976,37 +998,57 @@ class CertSetupForm(Form):
                                   widget=FileInput(
                                       attrs={'id': 'uploadCertificate'}))
 
+    uploadPrivateKey = FileField(required=True,
+                                 widget=FileInput(
+                                     attrs={'id': 'uploadPrivateKey'}))
+
     pinField = CharField(widget=PasswordInput(attrs={'id': 'pinField', 'name': 'pinField'}),
                          required=True,
                          error_messages={'required': 'Campo obbligatorio!'},
                          validators=[regex_dim_pin])
 
+    cert = None
+
     def clean_uploadCertificate(self):
         uploadCertificate = self.cleaned_data.get('uploadCertificate')
         if not uploadCertificate:
-            print("not uploadCertificate")
             raise ValidationError("Il certificato selezionato non è valido!")
-        cert = get_certificate(uploadCertificate)
-        if not check_expiration_certificate(cert) or not verify_policy_certificate(cert):
-            LOG.error("Policy del certificato non valide o certificato scaduto")
+        self.cert = get_certificate(uploadCertificate)
+        if "BEGIN RSA PRIVATE KEY" in self.cert:
+            self.cert = None
+            LOG.debug("Chiave privata presente - Certificato non valido")
+            raise ValidationError("Il certificato non deve contenere la chiave privata!")
+        if not check_expiration_certificate(self.cert) or not verify_policy_certificate(self.cert):
+            LOG.debug("Policy del certificato non valide o certificato scaduto")
             raise ValidationError("Il certificato selezionato non è valido!")
-        result = verify_certificate_chain(cert)
+        result = verify_certificate_chain(self.cert)
         if result == StatusCode.ERROR.value:
             raise ValidationError("Il certificato selezionato non è valido!")
         if result == StatusCode.EXC.value or result == StatusCode.NOT_FOUND.value:
             raise ValidationError("Impossibile verificare il certificato selezionato!")
+        return
+
+    def clean_uploadPrivateKey(self):
+        uploadPrivateKey = self.cleaned_data.get('uploadPrivateKey')
+        if not self.cert:
+            raise ValidationError("Devi prima caricare il certificato!")
+        if not uploadPrivateKey:
+            raise ValidationError("La chiave privata selezionata non è valida!")
+        pk = get_certificate(uploadPrivateKey)
+        if "BEGIN CERTIFICATE" in pk:
+            LOG.debug("Certificato presente - Chiave privata non valida")
+            raise ValidationError("La chiave privata non deve contenere il certificato!")
+        cert = pk + "\n" + self.cert
         try:
             crypto.load_certificate(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            print("not load_certificate")
-            LOG.error("Exception: {}".format(str(e)))
-            raise ValidationError("Il certificato selezionato non è valido!")
+            LOG.warning("Exception: {}".format(str(e)))
+            raise ValidationError("La chiave privata selezionata non è valida!")
         try:
             crypto.load_privatekey(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            print("not load_privatekey")
-            LOG.error("Exception: {}".format(str(e)))
-            raise ValidationError("Il certificato selezionato non è valido!")
+            LOG.warning("Exception: {}".format(str(e)))
+            raise ValidationError("La chiave privata selezionata non è valida!")
         return
 
     def clean_pinField(self):

@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
+from rao.settings import BASE_URL
 from .classes.choices import AlertType, StatusCode
 from .decorators import login_required, admin_required, operator_required, only_one_admin
 from .forms import LoginForm, NewOperatorForm, NewIdentityForm, \
@@ -17,7 +18,7 @@ from .forms import LoginForm, NewOperatorForm, NewIdentityForm, \
     NewIdentityPinForm, EmailSetupForm, CertSetupForm
 from .utils.mail_utils import send_email
 from .utils.utils import check_operator, display_alert, render_to_pdf, page_manager, is_admin, \
-    fix_name_surname, download_pdf, get_certificate
+    fix_name_surname, download_pdf, get_certificate, from_utc_to_local
 from .utils.utils_api import activate_op_api, update_cert
 from .utils.utils_db import get_all_operator, get_attributes_RAO, update_password_operator, \
     search_filter, create_operator, get_all_idr, create_identity, get_operator_by_username, \
@@ -25,7 +26,7 @@ from .utils.utils_db import get_all_operator, get_attributes_RAO, update_passwor
     create_verify_mail_token, set_is_verified, get_idr_filter_operator, get_status_operator, \
     delete_identity_request, update_sign_field_operator, update_status_operator, update_emailrao
 from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check, init_user
-from .utils.utils_token import token_sigillato, create_token_file, delete_token_file
+from .utils.utils_token import signed_token, create_token_file, delete_token_file
 
 # Core Django imports
 # Third-party app imports
@@ -45,11 +46,20 @@ def logout_agency(request):
     try:
         request.session["is_authenticated"] = False
         setup_ok = True if 'setup_ok' in request.session else False
-
+        pin_changed_ok = True if 'pinChanged' in request.session else False
+        password_changed_ok = True if 'passwordChanged' in request.session else False
+        key_list = []
         for sesskey in request.session.keys():
-            del request.session[sesskey]
+            key_list.append(sesskey)
 
-        request.session["setup_ok"] = setup_ok
+        for key in key_list:
+            del request.session[key]
+        if setup_ok:
+            request.session['setup_ok_redirect'] = True
+        elif pin_changed_ok:
+            request.session['pin_changed_redirect'] = True
+        elif password_changed_ok:
+            request.session['password_changed_redirect'] = True
     except Exception as e:
         LOG.error("Errore in decorator login_required: " + str(e))
         HttpResponseRedirect(reverse('agency:login'))
@@ -439,7 +449,7 @@ def summary_identity(request, t):
                     identity['identificationExpirationDate'], '%d/%m/%Y')
                 id_request = create_identity_request(request, identity)
                 pin = params['pin']
-                dict_token = token_sigillato(identity, request.session['username'], pin)
+                dict_token = signed_token(identity, request.session['username'], pin)
 
                 if not id_request or dict_token['statusCode'] is not StatusCode.OK.value:
                     if id_request:
@@ -462,6 +472,9 @@ def summary_identity(request, t):
                     'passphrase2': dict_token['passphrase'][6:12],
                     'is_admin': is_admin(request.session['username']),
                     'id': str(id_request.uuid_identity),
+                    'pdf_object': 'SPID - Identificazione presso Sportello Pubblico',
+                    'name_user': identity['name'],
+                    'surname_user': identity['familyName'],
                     'timestamp': datetime.datetime.strftime(id_request.timestamp_identification, '%Y-%m-%d %H:%M')
                 }
 
@@ -469,15 +482,19 @@ def summary_identity(request, t):
                 params['identity'] = identity
                 params['rao'] = get_attributes_RAO()
                 params['active_operator'] = get_operator_by_username(request.session['username'])
+                timestamp = from_utc_to_local(id_request.timestamp_identification).strftime('%d/%m/%Y %H:%M')
                 mail_elements = {
+                    'base_url': BASE_URL,
                     'rao_name': get_attributes_RAO().name,
-                    'nameUser': identity['name'],
-                    'familyNameUser': identity['familyName']
+                    'name_user': identity['name'],
+                    'surname_user': identity['familyName'],
+                    'operator': params['active_operator'],
+                    'timestamp': timestamp
                 }
                 messages = display_alert(AlertType.SUCCESS, "Identificazione avvenuta con successo!")
                 request.session['identified'] = True
 
-                email_status_code = send_email([identity['email']], "Processo di attivazione SPID",
+                email_status_code = send_email([identity['email']], "SPID - Identificazione presso Sportello Pubblico",
                                               settings.TEMPLATE_URL_MAIL + 'mail_passphrase.html',
                                               {'passphrase2': dict_token['passphrase'][6:12],
                                                'mail_elements': mail_elements},
@@ -523,15 +540,25 @@ def pdf_view(request, t):
             settings_rao = get_attributes_RAO()
             name = settings_rao.name
             op = get_operator_by_username(request.session['username'])
+
+            if 'timestamp' in params:
+                date = datetime.datetime.strptime(params['timestamp'], '%Y-%m-%d %H:%M') + datetime.timedelta(days=30)
+                token_expiration_date = date.strftime('%d/%m/%Y %H:%M')
+            else:
+                token_expiration_date = None
+
+
             return render_to_pdf(
                 settings.TEMPLATE_URL_PDF + 'pdf_template.html',
                 {
                     'pagesize': 'A4',
                     'passphrase': params['passphrase1'],
                     'RAO_name': name,
-                    'name_operator': op.name,
-                    'surname_operator': op.surname,
-                    'timestamp': params['timestamp']
+                    'operator': op,
+                    'name_user': params['name_user'] if 'name_user' in params else None,
+                    'surname_user': params['surname_user'] if 'surname_user' in params else None,
+                    'pdf_object': params['pdf_object'] if 'pdf_object' in params else None,
+                    'token_expiration_date': token_expiration_date
                 })
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
@@ -577,10 +604,14 @@ def change_pin(request, t):
     :param request: request
     :param t: token
     """
+
     try:
         params_t = signing.loads(t)
         username = params_t['username']
         messages = []
+
+        if get_operator_by_username(username).signStatus:
+            return HttpResponseRedirect(reverse('agency:logout_agency'))
 
         if is_admin(username):
             form = ChangePinFileForm()
@@ -601,7 +632,7 @@ def change_pin(request, t):
                 old_pin = int(request.POST.get('oldPinField'))
                 new_pin = int(request.POST.get('newPinField'))
                 if is_admin(username):
-                    certificate = get_certificate(request.FILES['uploadCertificate'])
+                    certificate = get_certificate(request.FILES['uploadPrivateKey']) + "\n" + get_certificate(request.FILES['uploadCertificate'])
                     status_code_activate = activate_op_api(username, old_pin, new_pin, certificate)
                 else:
                     status_code_activate = activate_op_api(username, old_pin, new_pin)
@@ -616,7 +647,7 @@ def change_pin(request, t):
                         del request.session['passwordChanged']
                     return HttpResponseRedirect(reverse('agency:logout_agency'))
 
-            error = "Si è verificato un problema con l'aggiornamento del PIN, riprova inserendo i dati corretti."
+            error = "Si è verificato un problema con l'aggiornamento, riprova inserendo i dati corretti."
             messages = display_alert(AlertType.DANGER, error)
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'change_pin.html',
@@ -737,7 +768,7 @@ def admin_setup(request, t):
             if 'update_cert' in request.POST:
                 form_cert = CertSetupForm(request.POST, request.FILES)
                 if form_cert.is_valid():
-                    certificate = get_certificate(request.FILES['uploadCertificate'])
+                    certificate = get_certificate(request.FILES['uploadPrivateKey']) + "\n" + get_certificate(request.FILES['uploadCertificate'])
                     status_code = update_cert(request.POST['pinField'], request.session['username'], certificate)
                     if status_code != StatusCode.OK.value:
                         messages = display_alert(AlertType.DANGER,
@@ -822,6 +853,7 @@ def initial_setup(request):
                         t = signing.dumps(params)
 
                         mail_elements = {
+                            'base_url': BASE_URL,
                             'nameUser': name,
                             'familyNameUser': surname,
                             'rao_name': rao_name,
@@ -831,7 +863,7 @@ def initial_setup(request):
                         try:
                             mail_sent = send_email([email], "Attivazione ADMIN R.A.O.",
                                                    settings.TEMPLATE_URL_MAIL + 'mail_activation.html',
-                                                   {'activation_link': settings.BASE_URL + str(
+                                                   {'activation_link': BASE_URL + str(
                                                        reverse('agency:redirect', kwargs={'t': t}))[1:],
                                                     'mail_elements': mail_elements
                                                     })

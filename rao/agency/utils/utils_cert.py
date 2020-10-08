@@ -32,7 +32,7 @@ def check_expiration_certificate(cert_string):
         if certificate.not_valid_after > datetime.datetime.now() > certificate.not_valid_before:
             return True
     except Exception as e:
-        LOG.error('Errore su check_expiration_certificate: {}'.format(str(e)))
+        LOG.warning('Errore su check_expiration_certificate: {}'.format(str(e)))
     return False
 
 
@@ -51,12 +51,12 @@ def verify_policy_certificate(cert_string):
                 for qualifier in qualifiers:
                     if isinstance(qualifier, UserNotice):
                         return True
-                LOG.error('Verifica certificato fallita. Problema nella verifica del qualifier UserNotice: \n')
+                LOG.debug('Verifica certificato fallita. Problema nella verifica del qualifier UserNotice: \n')
                 return False
-        LOG.error('Verifica certificato fallita. Problema nella verifica dell\'OID:\n')
+        LOG.debug('Verifica certificato fallita. Problema nella verifica dell\'OID:\n')
         return False
     except Exception as e:
-        LOG.error('Errore su check_certificate: {}'.format(str(e)))
+        LOG.warning('Errore su check_certificate: {}'.format(str(e)))
         return False
 
 
@@ -70,9 +70,9 @@ def verify_certificate_chain(cert_string):
         certificate = crypto.load_certificate(crypto.FILETYPE_PEM, cert_string.encode())
         cert_x509 = x509.load_pem_x509_certificate(cert_string.encode(), default_backend())
     except Exception as e:
-        LOG.error('Non sono riuscito a caricare il seguente certificato:')
-        LOG.error(cert_string)
-        LOG.error(str(e))
+        LOG.debug('Non sono riuscito a caricare il seguente certificato:')
+        LOG.debug(cert_string)
+        LOG.warning(str(e))
         return StatusCode.ERROR.value
 
     try:
@@ -94,13 +94,13 @@ def verify_certificate_chain(cert_string):
             certificate_policies = cert_x509.extensions.get_extension_for_oid(
                 ExtensionOID.CRL_DISTRIBUTION_POINTS).value
         except x509.extensions.ExtensionNotFound:
-            LOG.error(cert_string)
+            LOG.warning(cert_string)
             return StatusCode.NOT_FOUND.value
 
         crl_uri = get_crl_endpoint(certificate_policies)
 
         if crl_uri is None:
-            LOG.error('Impossibile stabilire endpoint per CRL con aki = {}'.format(aki))
+            LOG.warning('Impossibile stabilire endpoint per CRL con aki = {}'.format(aki))
             return StatusCode.NOT_FOUND.value
 
         crl_latest = make_crl_store_path(crl_uri, aki) + ".crl"
@@ -127,9 +127,9 @@ def verify_certificate_chain(cert_string):
         return StatusCode.OK.value
     except Exception as e:
         type, value, tb = sys.exc_info()
-        LOG.error(e)
-        LOG.error('exception_value = {0}, value = {1}'.format(str(value), str(type)))
-        LOG.error('tb = {}'.format(traceback.format_exception(type, value, tb)))
+        LOG.warning(e)
+        LOG.warning('exception_value = {0}, value = {1}'.format(str(value), str(type)))
+        LOG.warning('tb = {}'.format(traceback.format_exception(type, value, tb)))
         return StatusCode.EXC.value
 
 
