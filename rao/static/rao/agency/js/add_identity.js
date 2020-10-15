@@ -235,19 +235,8 @@ populate_select("countyOfBirth", "placeOfBirth");
 populate_select("addressCountry", "addressMunicipality");
 
 function date_format_change(date_with_slash) {
-
-    d = new Date(date_with_slash);
-    month = '' + (d.getMonth() + 1),
-    day = '' + d.getDate(),
-    year = d.getFullYear();
-
-    if (month.length < 2)
-        month = '0' + month;
-    if (day.length < 2)
-        day = '0' + day;
-
-    return [year, month, day].join('-');
-
+    dmy = date_with_slash.split('/');
+    return [dmy[2], dmy[1], dmy[0]].join('-');
 }
 
 
