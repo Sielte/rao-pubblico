@@ -355,7 +355,7 @@ def decode_fiscal_number(request):
             return JsonResponse({'statusCode': StatusCode.OK.value,
                                  'placeOfBirth': decode_cf['birthplace']['code'],
                                  'countyOfBirth': decode_cf['birthplace']['province'],
-                                 'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
+                                 'dateOfBirth': decode_cf['birthdate'].strftime('%m/%d/%Y'),
                                  'gender': decode_cf['sex']
                                  })
 
