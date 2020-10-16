@@ -19,7 +19,7 @@ from .classes.choices import CARD_TYPE, ADDRESS_TYPE, CHOICE_SEX, ISSUER_TYPE, g
 from .classes.regex import regex_cap, regex_cie, regex_cf, regex_date, regex_email, regex_number, \
     regex_name, regex_password, regex_surname, regex_doc, regex_rao_name, regex_issuercode, \
     regex_pwd_email, regex_patente, regex_email_port, regex_pin, regex_dim_pin
-from .utils.utils import check_ts, get_certificate
+from .utils.utils import check_ts, get_certificate, set_client_ip
 from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain
 
 LOG = logging.getLogger(__name__)
@@ -171,6 +171,7 @@ class ChangePasswordForm(Form):
         formConfirmPassword = self.cleaned_data.get('confirmPasswordField')
 
         if formPassword and formPassword != formConfirmPassword:
+            LOG.warning("Conferma password diversa da password.", extra=set_client_ip())
             raise ValidationError("Le password non corrispondono!")
         return
 
@@ -226,10 +227,10 @@ class ChangePinFileForm(Form):
         self.cert = get_certificate(uploadCertificate)
         if "BEGIN RSA PRIVATE KEY" in self.cert:
             self.cert = None
-            LOG.debug("Chiave privata presente - Certificato non valido")
+            LOG.error("Chiave privata presente - Certificato non valido", extra=set_client_ip())
             raise ValidationError("Il certificato non deve contenere la chiave privata!")
         if not check_expiration_certificate(self.cert) or not verify_policy_certificate(self.cert):
-            LOG.debug("Policy del certificato non valide o certificato scaduto")
+            LOG.error("Policy del certificato non valide o certificato scaduto", extra=set_client_ip())
             raise ValidationError("Il certificato selezionato non è valido!")
         result = verify_certificate_chain(self.cert)
         if result == StatusCode.ERROR.value:
@@ -246,18 +247,18 @@ class ChangePinFileForm(Form):
             raise ValidationError("La chiave privata selezionata non è valida!")
         pk = get_certificate(uploadPrivateKey)
         if "BEGIN CERTIFICATE" in pk:
-            LOG.debug("Certificato presente - Chiave privata non valida")
+            LOG.error("Certificato presente - Chiave privata non valida", extra=set_client_ip())
             raise ValidationError("La chiave privata non deve contenere il certificato!")
         cert = pk + "\n" + self.cert
         try:
             crypto.load_certificate(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.error("Warning: {}".format(str(e)), extra=set_client_ip())
             raise ValidationError("La chiave privata selezionata non è valida!")
         try:
             crypto.load_privatekey(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.error("Warning: {}".format(str(e)), extra=set_client_ip())
             raise ValidationError("La chiave privata selezionata non è valida!")
         return
 
@@ -347,7 +348,7 @@ class NewOperatorForm(Form):
             else:
                 raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.warning("{} - Codice fiscale non corrisponde con dati anagrafici".format(self.cleaned_data.get('fiscalNumber')), extra=set_client_ip())
             raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
 
 
@@ -404,7 +405,7 @@ class NewOperatorPinForm(Form):
             else:
                 raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.warning("Warning: {}".format(str(e)), extra=set_client_ip())
             raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
 
 
@@ -612,7 +613,7 @@ class NewIdentityForm(Form):
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.warning("Warning: {}".format(str(e)), extra=set_client_ip())
             isvalid = False
 
         if not isvalid:
@@ -908,7 +909,7 @@ class NewIdentityPinForm(Form):
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.warning("Warning: {}".format(str(e)), extra=set_client_ip())
             isvalid = False
 
         if not isvalid:
@@ -1016,10 +1017,10 @@ class CertSetupForm(Form):
         self.cert = get_certificate(uploadCertificate)
         if "BEGIN RSA PRIVATE KEY" in self.cert:
             self.cert = None
-            LOG.debug("Chiave privata presente - Certificato non valido")
+            LOG.error("Chiave privata presente - Certificato non valido", extra=set_client_ip())
             raise ValidationError("Il certificato non deve contenere la chiave privata!")
         if not check_expiration_certificate(self.cert) or not verify_policy_certificate(self.cert):
-            LOG.debug("Policy del certificato non valide o certificato scaduto")
+            LOG.error("Policy del certificato non valide o certificato scaduto", extra=set_client_ip())
             raise ValidationError("Il certificato selezionato non è valido!")
         result = verify_certificate_chain(self.cert)
         if result == StatusCode.ERROR.value:
@@ -1036,18 +1037,18 @@ class CertSetupForm(Form):
             raise ValidationError("La chiave privata selezionata non è valida!")
         pk = get_certificate(uploadPrivateKey)
         if "BEGIN CERTIFICATE" in pk:
-            LOG.debug("Certificato presente - Chiave privata non valida")
+            LOG.error("Certificato presente - Chiave privata non valida", extra=set_client_ip())
             raise ValidationError("La chiave privata non deve contenere il certificato!")
         cert = pk + "\n" + self.cert
         try:
             crypto.load_certificate(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
             raise ValidationError("La chiave privata selezionata non è valida!")
         try:
             crypto.load_privatekey(crypto.FILETYPE_PEM, cert.encode())
         except Exception as e:
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
             raise ValidationError("La chiave privata selezionata non è valida!")
         return
 

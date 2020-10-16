@@ -28,6 +28,7 @@ from agency.utils import utils
 from agency.utils.mail_utils import send_email
 from django.conf import settings
 
+
 from agency.utils.utils_api import create_api, reset_pin_api, disable_operator_api
 from rao.settings import BASE_URL
 
@@ -50,7 +51,7 @@ def populate_role():
             r.save()
         return True
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return False
 
 
@@ -78,7 +79,7 @@ def create_first_operator(request):
 
             return True
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
 
     return False
 
@@ -98,7 +99,7 @@ def disable_operator(request, page, t):
             operator.status = False
             operator.save()
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
 
     return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
@@ -131,7 +132,7 @@ def reset_pin_operator(request, page, t):
                     params_t['operator'] = request.POST.get('username_op')
                     t = signing.dumps(params_t)
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
 
     return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
@@ -206,7 +207,7 @@ def send_recovery_link(username):
                 return StatusCode.ERROR.value
         return StatusCode.NOT_FOUND.value
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value
 
 
@@ -225,7 +226,8 @@ def update_status_operator(username, status=True):
             operator.save()
             return StatusCode.OK.value
     except Exception as e:
-        LOG.warning("[{}] Si è verificato un errore durante l'update dello stato operatore: {}".format(username, str(e)))
+        LOG.error("[{}] Si è verificato un errore durante l'update dello stato operatore: {}".format(username, str(e))
+                    , extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value
 
     return StatusCode.ERROR.value
@@ -242,15 +244,17 @@ def get_status_operator(username):
         if operator:
             return operator.status
     except Exception as e:
-        LOG.warning("[{}] Si è verificato un errore durante il recupero dello status: {}".format(username, str(e)))
+        LOG.error("[{}] Si è verificato un errore durante il recupero dello status: {}".format(username, str(e)),
+                    extra=agency.utils.utils.set_client_ip())
         return False
 
     return False
 
 
-def update_password_operator(username, new_password, status=True):
+def update_password_operator(username, new_password, status=True, request=None):
     """
     Aggiorna la password di un operatore
+    :param request: request
     :param username: cf/username dell'operatore
     :param new_password: nuova password dell'operatore
     :param status: status da assegnare all'operatore (default: True)
@@ -259,8 +263,8 @@ def update_password_operator(username, new_password, status=True):
     try:
         operator = Operator.objects.filter(fiscalNumber=username).last()
         if operator:
-            check_operator = utils.check_operator(username, new_password, status)
-            if check_operator != StatusCode.ERROR.value and check_operator != StatusCode.SIGN_NOT_AVAIBLE.value:
+            check_password = utils.check_password(username, new_password, status, request)
+            if check_password != StatusCode.ERROR.value and check_password != StatusCode.SIGN_NOT_AVAIBLE.value:
                 return StatusCode.LAST_PWD.value
             password = hashlib.sha256(new_password.encode()).hexdigest()
             hash_pass_insert = jwt.encode(
@@ -272,7 +276,8 @@ def update_password_operator(username, new_password, status=True):
             operator.save()
             return StatusCode.OK.value
     except Exception as e:
-        LOG.warning("[{}] Si è verificato un errore durante l'update della password: {}".formt(username, str(e)))
+        LOG.error("[{}] Si è verificato un errore durante l'update della password: {}".formt(username, str(e)),
+                  extra=agency.utils.utils.set_client_ip(request))
         return StatusCode.EXC.value
 
     return StatusCode.ERROR.value
@@ -290,7 +295,7 @@ def create_operator(admin_username, operator):
 
     try:
         password = hashlib.sha256('password'.encode()).hexdigest()
-        hash_pass_insert = jwt.encode({'username': operator.get('email'), 'exp': datetime.datetime.utcnow()}, password,
+        hash_pass_insert = jwt.encode({'username': operator.get('fiscalNumber').upper(), 'exp': datetime.datetime.utcnow()}, password,
                                       algorithm='HS256')
 
         new_operator = Operator.objects.create(name=name,
@@ -302,7 +307,9 @@ def create_operator(admin_username, operator):
                                                status=False)
 
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("admin: {}, operator: {} - Codice fiscale/email operatore gà presente".format(admin_username,
+                                                                                                  operator.get('fiscalNumber').upper()),
+                    extra=agency.utils.utils.set_client_ip())
         return StatusCode.ERROR.value, None
 
     try:
@@ -340,7 +347,7 @@ def create_operator(admin_username, operator):
         if not mail_sended:
             return StatusCode.BAD_REQUEST.value, None
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value, None
     return StatusCode.OK.value, op_temporary_pin
 
@@ -356,7 +363,7 @@ def create_identity(request, id_operator):
         user = UserDetail(request.POST, id_operator)
         return user
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
         return None
 
 
@@ -384,25 +391,23 @@ def create_identity_request(request, identity):
 
                 return id_request
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
     return None
 
 
 def delete_identity_request(identity):
     """
-    Cancellazione richiesta di indentità
+    Cancellazione richiesta di identità
     :param identity: entry della tabella IdentityRequest da cancellare
     :return: StatusCode
     """
-    if not identity:
-        return StatusCode.NOT_FOUND.value
 
     try:
         token_user = identity.token
         identity.delete()
         token_user.delete()
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value
     return StatusCode.OK.value
 
@@ -417,7 +422,7 @@ def create_token_user():
         token_user = TokenUser(timestamp_creation=datetime.datetime.utcnow())
         token_user.save()
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
     return token_user
 
 
@@ -430,7 +435,7 @@ def get_attributes_RAO():
         rao = SettingsRAO.objects.first()
         return rao
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return None
 
 
@@ -460,7 +465,7 @@ def search_filter(string, tab, operator=None):
                     Q(idOperator__name__icontains=string) | Q(idOperator__surname__icontains=string))
             return identity
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return None
 
 
@@ -493,7 +498,7 @@ def get_identification_report(days=4, week=0):
                     i -= 1
         return report
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return []
 
 
@@ -520,7 +525,7 @@ def get_weekly_identification_report(request):
         return JsonResponse({'statusCode': StatusCode.OK.value, 'date': date, 'num_identified': num_identified})
 
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
 
@@ -630,14 +635,29 @@ def resend_mail_activation(request, page, t):
                     }
                     create_verify_mail_token(operator.email, t_mail)
 
-                    send_email([operator.email], "Attivazione account R.A.O.",
-                               settings.TEMPLATE_URL_MAIL + 'mail_activation.html',
-                               {'activation_link': settings.BASE_URL + str(
-                                   reverse('agency:redirect', kwargs={'t': t_mail}))[1:],
-                                'mail_elements': mail_elements})
+                    status_email = send_email([operator.email], "Attivazione account R.A.O.",
+                                              settings.TEMPLATE_URL_MAIL + 'mail_activation.html',
+                                              {'activation_link': settings.BASE_URL + str(
+                                                  reverse('agency:redirect', kwargs={'t': t_mail}))[1:],
+                                               'mail_elements': mail_elements})
+
+                    if status_email == StatusCode.OK.value:
+                        LOG.info("{}, {} - Mail di attivazione reinviata".format(request.session.get('username'),
+                                                                                 request.POST.get('username_op')),
+                                 extra=agency.utils.utils.set_client_ip(request))
+
+                    else:
+                        LOG.warning("{}, {} - Errore durante l'invio mail di attivazione".format(request.session.get('username'),
+                                                                                 request.POST.get('username_op')),
+                                    extra=agency.utils.utils.set_client_ip(request))
+
+
+
+
+
 
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
 
     return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
@@ -657,7 +677,7 @@ def update_emailrao(op, rao_name, rao_email, rao_host, rao_pwd, email_crypto_typ
     """
     try:
 
-        entry_rao = SettingsRAO.objects.first()
+        entry_rao = get_attributes_RAO()
         if not entry_rao:
             return False
         else:
@@ -682,14 +702,13 @@ def update_emailrao(op, rao_name, rao_email, rao_host, rao_pwd, email_crypto_typ
                 entry_rao.port = email_port
                 entry_rao.crypto = email_crypto_type
                 entry_rao.save()
-                LOG.debug("Messaggio inviato correttamente")
                 return True
             else:
-                LOG.debug("Messaggio non inviato")
+                LOG.error("Errore nell'invio della mail", extra=agency.utils.utils.set_client_ip())
                 return False
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.warning("Exception: {}".format(str(e)))
-        LOG.warning('exception_value = %s, value = %s' % (value, type,))
-        LOG.warning('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=agency.utils.utils.set_client_ip())
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=agency.utils.utils.set_client_ip())
     return False

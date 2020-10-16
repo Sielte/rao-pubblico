@@ -35,7 +35,7 @@ def get_conn_from_db(label, tmp_settings=None):
                 password = utils.decrypt_data(sr.password, settings.SECRET_KEY_ENC)
             except Exception as e:
                 error = True
-                LOG.error("Exception: {}".format(str(e)))
+                LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         if not error:
             email_connections = {
                 'default': {
@@ -52,7 +52,7 @@ def get_conn_from_db(label, tmp_settings=None):
     connections = email_connections
     if not label in email_connections:
         err = 'Configurazione email ''%s'' non definita.' % (label,)
-        LOG.critical(err)
+        LOG.error(err, extra=agency.utils.utils.set_client_ip())
         raise Exception(err)
     options = connections[label]
     return options, get_connection(**options)
@@ -89,12 +89,12 @@ def send_email(to_email, subject, template, data, attachment=None, attachment_na
                         email.attach(attach if not attachment_name else attachment_name, file.read(), 'text/csv')
                 email.content_subtype = "html"
                 email.send()
-            LOG.info('[%s] Mail con oggetto "%s" inviata - Connection: %s' % (to_email, subject, conn_label))
+            LOG.info('[%s] Mail con oggetto "%s" inviata - Connection: %s' % (to_email, subject, conn_label), extra=agency.utils.utils.set_client_ip())
             return StatusCode.OK.value
         except Exception as e:
-            LOG.warning('[%s] Errore nell\'invio della mail con oggetto "%s" - Connection: %s' % (
-                to_email, subject, conn_label))
-            LOG.warning("Exception: {}".format(str(e)))
+            LOG.error('[%s] Errore nell\'invio della mail con oggetto "%s" - Connection: %s' % (
+                to_email, subject, conn_label), extra=agency.utils.utils.set_client_ip())
+            LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
             time.sleep(5)
             return StatusCode.EXC.value
 

@@ -15,6 +15,7 @@ from django.http import JsonResponse
 import agency
 from agency.classes.choices import StatusCode
 from agency.models import AddressNation, AddressCity, AddressMunicipality, Role, Operator, SettingsRAO, VerifyMail
+from agency.utils.utils import set_client_ip
 from agency.utils.utils_db import populate_role, create_first_operator
 
 LOG = logging.getLogger(__name__)
@@ -46,9 +47,9 @@ def init_nation(request, file='nazioni.csv'):
         return JsonResponse({'statusCode': StatusCode.OK.value})
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip(request))
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip(request))
 
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
@@ -80,9 +81,9 @@ def init_county(request, file='province.csv'):
         return JsonResponse({'statusCode': StatusCode.OK.value})
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip(request))
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip(request))
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
 
@@ -120,14 +121,14 @@ def init_municipality(request, file='ANPR_archivio_comuni.csv'):
                     mun_name = row["DENOMINAZIONE_IT"]
 
                 except Exception as e:
-                    LOG.error("Exception: {}".format(str(e)))
+                    LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
             AddressMunicipality.objects.bulk_create(buffer)
         return JsonResponse({'statusCode': StatusCode.OK.value})
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip(request))
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip(request))
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
 
@@ -149,13 +150,13 @@ def init_prefix(request, file='prefissi.csv', encoding='utf-8'):
                         an.prefix = row['Prefisso']
                         an.save()
                 except Exception as e:
-                    LOG.error("Exception: {}".format(str(e)))
+                    LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return JsonResponse({'statusCode': StatusCode.OK.value})
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip(request))
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip(request))
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
 
@@ -174,14 +175,16 @@ def init_user(request):
                 vms.isVerified = True
                 vms.save()
                 return JsonResponse({'statusCode': StatusCode.OK.value})
+            LOG.error("Errore durante la verifica dell'operatore activation_token")
             return JsonResponse({'statusCode': StatusCode.ERROR.value})
         else:
+            LOG.error("Errore durante il popolamento tabella ruoli operatori")
             return JsonResponse({'statusCode': StatusCode.ERROR.value})
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip(request))
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip(request))
     return JsonResponse({'statusCode': StatusCode.BAD_REQUEST.value})
 
 
@@ -222,9 +225,9 @@ def init_settings_rao(rao_name, issuer_code, rao_email, rao_host, rao_pwd, email
         return True
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.error("Exception: {}".format(str(e)))
-        LOG.error('exception_value = %s, value = %s' % (value, type,))
-        LOG.error('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip())
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip())
     return False
 
 
@@ -242,7 +245,7 @@ def configuration_check():
             return False
         return True
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
     return False
 
 
@@ -267,8 +270,8 @@ def necessary_data_check():
         return True
     except Exception as e:
         ype, value, tb = sys.exc_info()
-        LOG.warning("Exception: {}".format(str(e)))
-        LOG.warning('exception_value = %s, value = %s' % (value, type,))
-        LOG.warning('tb = %s' % traceback.format_exception(type, value, tb))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
+        LOG.error('exception_value = %s, value = %s' % (value, type,), extra=set_client_ip())
+        LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=set_client_ip())
     return False
 

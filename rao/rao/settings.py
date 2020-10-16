@@ -99,35 +99,44 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
-        'version_filter': {
-            '()': 'agency.classes.version_filter.MyFilter'
-        }
+        'SystemLogFilter': {
+            '()': 'agency.classes.system_log_filter.SystemLogFilter'
+        },
 
     },
     'formatters': {
         'standard': {
-            'format': "[v. %(version)s] [%(asctime)s] %(levelname)s [%(funcName)s] [%(name)s:%(lineno)s] %(message)s",
+            'format': "[v. %(version)s] [%(client_ip)s] [%(rao_name)s] [%(asctime)s] %(levelname)s [%(funcName)s] [%(name)s:%(lineno)s] %(message)s",
             'datefmt': "%d/%b/%y %H:%M:%S"
+        },
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {levelname} {message}',
+            'style': '{',
         },
     },
     'handlers': {
         'file': {
-            'filters': ['version_filter'],
+            'filters': ['SystemLogFilter'],
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': './data/debug.log',
             'formatter': 'standard'
         },
         'mail_admins': {
-            'filters': ['version_filter'],
+            'filters': ['SystemLogFilter'],
             'level': os.environ.get('MAIL_LOG_LEVEL', 'ERROR'),
             'class': 'django.utils.log.AdminEmailHandler',
             'include_html': True
         },
         'console': {
-            'filters': ['version_filter'],
+            'filters': ['SystemLogFilter'],
             'class': 'logging.StreamHandler',
             'formatter': 'standard'
+        },
+        'django.server': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
         },
     },
     'loggers': {
@@ -142,6 +151,11 @@ LOGGING = {
             'level': os.environ.get('AGENCY_LOG_LEVEL', 'DEBUG'),
             'formatter': 'standard',
             'propagate': False
+        },
+        'django.server': {
+            'handlers': ['django.server'],
+            'level': os.environ.get('WEBSERVER_LOG_LEVEL', 'WARNING'),
+            'propagate': False,
         },
     },
 }
@@ -172,9 +186,13 @@ ENTRY_FOR_PAGE = 10
 
 DAYS_TO_IDENTIFIED = 30
 
+
+
 # Encrypting secret
 SECRET_KEY_ENC = os.environ.get('SECRET_KEY_ENC', os.urandom(24))
 
 CRL_PATH = os.environ.get('CRL_PATH', 'data/')
+
+RAO_NAME = os.environ.get('RAO_NAME', '')
 
 APP_VERSION = "1.0.1"

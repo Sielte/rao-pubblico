@@ -4,12 +4,15 @@ import datetime
 import json
 import logging
 
+# Core Django imports
 from django.conf import settings
 from django.core import signing
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
+# Imports from your apps
+import agency
 from rao.settings import BASE_URL
 from .classes.choices import AlertType, StatusCode
 from .decorators import login_required, admin_required, operator_required, only_one_admin
@@ -18,7 +21,7 @@ from .forms import LoginForm, NewOperatorForm, NewIdentityForm, \
     NewIdentityPinForm, EmailSetupForm, CertSetupForm
 from .utils.mail_utils import send_email
 from .utils.utils import check_operator, display_alert, render_to_pdf, page_manager, is_admin, \
-    fix_name_surname, download_pdf, get_certificate, from_utc_to_local
+    fix_name_surname, download_pdf, get_certificate, from_utc_to_local, set_client_ip
 from .utils.utils_api import activate_op_api, update_cert
 from .utils.utils_db import get_all_operator, get_attributes_RAO, update_password_operator, \
     search_filter, create_operator, get_all_idr, create_identity, get_operator_by_username, \
@@ -27,10 +30,6 @@ from .utils.utils_db import get_all_operator, get_attributes_RAO, update_passwor
     delete_identity_request, update_sign_field_operator, update_status_operator, update_emailrao
 from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check, init_user
 from .utils.utils_token import signed_token, create_token_file, delete_token_file
-
-# Core Django imports
-# Third-party app imports
-# Imports from your apps
 
 LOG = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ def logout_agency(request):
         elif password_changed_ok:
             request.session['password_changed_redirect'] = True
     except Exception as e:
-        LOG.error("Errore in decorator login_required: " + str(e))
+        LOG.error("Errore in decorator login_required: " + str(e), extra=set_client_ip(request))
         HttpResponseRedirect(reverse('agency:login'))
     return HttpResponseRedirect(reverse('agency:login'))
 
@@ -94,7 +93,7 @@ def login(request):
                 if not username or not password:
                     error = "I campi username e password sono obbligatori"
                 else:
-                    result = check_operator(username, password, True)
+                    result = check_operator(username, password, True, request)
                     if result == StatusCode.OK.value or result == StatusCode.EXPIRED_TOKEN.value:
                         request.session["username"] = username
                         params = {
@@ -104,11 +103,13 @@ def login(request):
                             params['is_admin'] = is_admin(username)
                             t = signing.dumps(params)
                             request.session["is_authenticated"] = True
+                            LOG.info("{} - Utente loggato".format(username), extra=set_client_ip(request))
                             return HttpResponseRedirect(reverse('agency:list_identity', kwargs={'t': t, 'page': 1}))
                         else:
                             params['psw_expired'] = True
                             t = signing.dumps(params)
                             request.session['redirect'] = True
+                            LOG.info("{} - Credenziali dell'utente scadute".format(username), extra=set_client_ip(request))
                             return HttpResponseRedirect(reverse('agency:change_password', kwargs={'t': t}))
                     elif result == StatusCode.SIGN_NOT_AVAIBLE.value:
                         params = {
@@ -122,7 +123,7 @@ def login(request):
         return render(request, settings.TEMPLATE_URL_AGENCY + 'login.html', {'form': form, 'params': params,
                                                                              'messages': messages})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO(),
         }
@@ -141,6 +142,7 @@ def recovery_password(request):
         'rao': get_attributes_RAO()
     }
     try:
+
         messages = None
         form = RecoveryForm()
         success = False
@@ -150,20 +152,23 @@ def recovery_password(request):
             if form.is_valid():
                 result = send_recovery_link(username)
                 if result == StatusCode.OK.value:
+                    LOG.info("{} - Mail per cambio password inviata".format(username), extra=set_client_ip(request))
                     messages = display_alert(AlertType.SUCCESS,
                                              "È stata inviata una mail di verifica all'indirizzo mail fornito!")
                     success = True
                 elif result == StatusCode.NOT_FOUND.value or result == StatusCode.ERROR.value:
                     messages = display_alert(AlertType.DANGER, "Utente non presente sul sistema")
+                    LOG.warning("{} - Utente non trovato".format(username), extra=set_client_ip(request))
                 else:
                     messages = display_alert(AlertType.DANGER, "Si è verificato un errore!")
+                    LOG.error("{} - Errore durante il recupero password utente".format(username), extra=set_client_ip(request))
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'recovery_password.html', {'success': success,
                                                                                          'form': form,
                                                                                          'params': params,
                                                                                          'messages': messages})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html', {"statusCode": StatusCode.EXC.value,
                                                                              'params': params,
                                                                              "message": "Errore durante la login"})
@@ -205,7 +210,7 @@ def list_operator(request, page, t):
         params['previous_page'] = pages['previous']
         return render(request, settings.TEMPLATE_URL_AGENCY + 'list_operator.html', {'params': params, 'token': t})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, 'params': params,
                        "message": "Errore durante il caricamento della lista"})
@@ -252,6 +257,9 @@ def add_operator(request, t):
                         }
                         request.session['pin'] = pin
                         t = signing.dumps(params)
+                        LOG.info("admin: {}, operator: {} - Operatore creato con successo".format(
+                            request.session['username'], request.POST.get('fiscalNumber').upper()),
+                            extra=set_client_ip(request))
                         return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'t': t, 'page': 1}))
                     elif result == StatusCode.ERROR.value:
                         messages = display_alert(AlertType.DANGER,
@@ -265,7 +273,7 @@ def add_operator(request, t):
         return render(request, settings.TEMPLATE_URL_AGENCY + 'add_operator.html',
                       {'params': params, 'token': t, 'form': form, 'messages': messages})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO(),
             'is_admin': is_admin(request.session['username']),
@@ -294,7 +302,7 @@ def dashboard(request, t):
         params['is_admin'] = is_admin(request.session['username'])
         return render(request, settings.TEMPLATE_URL_AGENCY + 'dashboard.html', {'params': params, 'token': t})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, 'params': params,
@@ -347,7 +355,7 @@ def list_identity(request, page, t):
         return render(request, settings.TEMPLATE_URL_AGENCY + 'list_identity.html',
                       {"params": params, "token": t, "messages": messages})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, 'params': params,
                        "message": "Errore durante il caricamento della lista"})
@@ -396,6 +404,8 @@ def add_identity(request, t):
                             params['user_detail'] = json.dumps(ud.to_json())
                             params['pin'] = request.POST.get('pinField')
                             t = signing.dumps(params)
+                            LOG.info("operator: {}, {} - Step1 identificazione OK - Form compilato".format(
+                                request.session['username'], ud.fiscalNumber), extra=set_client_ip(request))
                             return HttpResponseRedirect(reverse('agency:summary_identity', kwargs={'t': t}))
                     else:
                         messages = display_alert(AlertType.DANGER, "Errore durante inserimento richiesta")
@@ -408,11 +418,12 @@ def add_identity(request, t):
                     'active_operator': active_operator
                 }
                 messages = display_alert(AlertType.DANGER, "Campi della form vuoti o non validi")
-
+                LOG.warning("{} - Campi della form vuoti o non validi".format(
+                                request.session['username']), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'add_identity.html',
                       {'params': params, 'token': t, 'form': form, 'messages': messages})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO(),
             'active_operator': get_operator_by_username(request.session['username']),
@@ -454,6 +465,10 @@ def summary_identity(request, t):
                 if not id_request or dict_token['statusCode'] is not StatusCode.OK.value:
                     if id_request:
                         delete_identity_request(id_request)
+
+
+                    LOG.warning("operator: {}, {} - Step2 identificazione KO - Token non creato".format(
+                        request.session['username'],identity['fiscalNumber']), extra=set_client_ip(request))
                     if dict_token['statusCode'] == StatusCode.UNAUTHORIZED.value:
                         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                                       {"statusCode": StatusCode.UNAUTHORIZED.value,
@@ -503,7 +518,11 @@ def summary_identity(request, t):
 
                 if email_status_code == StatusCode.OK.value:
                     delete_token_file(str(id_request.uuid_identity) + "_tuo_token.txt")
+                    LOG.info("operator: {}, {} - Step2 identificazione OK - Token creato".format(
+                        request.session['username'], identity['fiscalNumber']), extra=set_client_ip(request))
                 else:
+                    LOG.warning("operator: {}, {} - Step2 identificazione - Invio mail non riuscita".format(
+                        request.session['username'],identity['fiscalNumber']), extra=set_client_ip(request))
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                                   {"statusCode": StatusCode.ERROR.value,
                                    "message": "Errore durante l'invio della mail"})
@@ -512,7 +531,7 @@ def summary_identity(request, t):
         return render(request, settings.TEMPLATE_URL_AGENCY + 'summary_identity.html',
                       {'params': params, 'token': t, 'messages': messages})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO(),
             'is_admin': is_admin(request.session['username']),
@@ -547,7 +566,6 @@ def pdf_view(request, t):
             else:
                 token_expiration_date = None
 
-
             return render_to_pdf(
                 settings.TEMPLATE_URL_PDF + 'pdf_template.html',
                 {
@@ -561,10 +579,13 @@ def pdf_view(request, t):
                     'token_expiration_date': token_expiration_date
                 })
 
+        LOG.error("{} - Errore nella visualizzazione del pdf di: {} ".format(request.session['username'],
+                                                                             params['fiscalNumber']),
+                  extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante l'apertura del pdf"})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante l'apertura del pdf"})
 
@@ -586,10 +607,11 @@ def pdf_download(request, t):
             del request.session['pin']
             return download_pdf(params, None, pin)
 
+        LOG.error("Errore durante l'apertura del pdf.", extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante l'apertura del pdf"})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante l'apertura del pdf"})
 
@@ -611,6 +633,7 @@ def change_pin(request, t):
         messages = []
 
         if get_operator_by_username(username).signStatus:
+            LOG.warning("{} - Accesso negato.".format(username), extra=set_client_ip(request))
             return HttpResponseRedirect(reverse('agency:logout_agency'))
 
         if is_admin(username):
@@ -645,6 +668,7 @@ def change_pin(request, t):
                         request.session['pinChanged'] = True
                     if 'passwordChanged' in request.session:
                         del request.session['passwordChanged']
+                    LOG.info("{} - PIN modificato.".format(username), extra=set_client_ip(request))
                     return HttpResponseRedirect(reverse('agency:logout_agency'))
 
             error = "Si è verificato un problema con l'aggiornamento, riprova inserendo i dati corretti."
@@ -653,7 +677,7 @@ def change_pin(request, t):
         return render(request, settings.TEMPLATE_URL_AGENCY + 'change_pin.html',
                       {'form': form, 'params': params, 'messages': messages, 'token': t})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO()
         }
@@ -701,22 +725,24 @@ def change_password(request, t):
                     if necessary_data_check():
                         init_user(request)
                         update_status_operator(username, True)
+                        LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
                         return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'change_password.html',
                                   {'params': params, 'messages': messages, 'token': t})
                 elif 'is_admin' not in params_t:
                     is_activation = True if 'pin' in params_t else False
 
-                    result = update_password_operator(username, password, not is_activation)
+                    result = update_password_operator(username, password, not is_activation, request)
                     if result == StatusCode.OK.value:
                         if 'psw_expired' not in params_t:
                             set_is_verified(t)
                         request.session['passwordChanged'] = True
-
+                        LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
                         if is_activation:
                             return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
                         return HttpResponseRedirect(reverse('agency:logout_agency'))
                     elif result == StatusCode.LAST_PWD.value:
+                        LOG.warning("{} - Nuova password uguale alla precedente.".format(username), extra=set_client_ip(request))
                         messages = display_alert(AlertType.DANGER,
                                                  "La nuova password inserita corrisponde a quella precendente!")
                     else:
@@ -724,17 +750,19 @@ def change_password(request, t):
                         messages = display_alert(AlertType.DANGER, error)
                 elif 'is_admin' in params_t and configuration_check():
                     update_status_operator(username, True)
+                    LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
                     return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
                 else:
                     return HttpResponseRedirect(reverse('agency:logout_agency'))
             else:
+                LOG.warning("{} - Password non valida.".format(username), extra=set_client_ip(request))
                 error = "Si è verificato un problema con l'aggiornamento della password, riprova."
                 messages = display_alert(AlertType.DANGER, error)
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'change_password.html',
                       {'form': form, 'params': params, 'messages': messages, 'token': t})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO()
         }
@@ -791,11 +819,14 @@ def admin_setup(request, t):
                     is_updated = update_emailrao(active_operator, get_attributes_RAO().name, rao_email, rao_host, rao_pwd,
                                                  rao_email_crypto_type, rao_email_port, smtp_mail_from_field)
                     if not is_updated:
+                        LOG.warning("{}, {} - Configurazione SMTP non riuscita.".format(agency.utils.utils_db.get_attributes_RAO().issuerCode,
+                                    request.session['username']), extra=set_client_ip(request))
                         messages = display_alert(AlertType.DANGER,
                                                  "Si è verificato un errore durante l'aggiornamento dei dati.")
                         return render(request, settings.TEMPLATE_URL_AGENCY + 'setup.html',
                                       {'form_email': form_email, 'messages': messages, 'params': params, 'token': t})
-
+                    LOG.info("{}, {} - Configurazione SMTP modificata.".format(agency.utils.utils_db.get_attributes_RAO().issuerCode,
+                                                                               request.session['username']), extra=set_client_ip(request))
                     return HttpResponseRedirect(reverse('agency:list_identity', kwargs={'t': t, 'page': 1}))
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'setup.html',
@@ -803,7 +834,8 @@ def admin_setup(request, t):
                        'token': t})
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("{}, {} - Exception: {}".format(agency.utils.utils_db.get_attributes_RAO().issuerCode,
+                                                  request.session['username'],str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante l'aggiornamento dei dati"})
 
@@ -873,22 +905,28 @@ def initial_setup(request):
                                 messages = display_alert(AlertType.SUCCESS,
                                                          "È stata appena inviata una mail di verifica "
                                                          "all'indirizzo indicato.")
+                                LOG.info("IPA: {}, {} - Form compilato con successo.".format(issuer_code,username),
+                                         extra=set_client_ip(request))
                             else:
+                                LOG.warning("{} - Configurazione SMTP errata.".format(username),
+                                         extra=set_client_ip(request))
                                 messages = display_alert(AlertType.DANGER,
                                                          "Si è verificato un errore durante l'invio della mail "
                                                          "di verifica, controlla che la configurazione SMTP "
                                                          "sia corretta.")
                         except Exception as e:
-                            LOG.error("Exception: {}".format(str(e)))
+                            LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
                             messages = display_alert(AlertType.DANGER,
                                                      "Si è verificato un errore durante l'invio della mail di verifica,"
                                                      " controlla che la configurazione SMTP sia corretta.")
+                else:
+                    LOG.warning("Errore nella compilazione del form",extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'init_setup.html',
                           {'form': form, 'messages': messages})
         else:
             return HttpResponseRedirect(reverse('agency:login'))
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante l'installazione"})
 
@@ -911,19 +949,30 @@ def redirect_page(request, t):
 
         if result == StatusCode.OK.value:
             request.session['redirect'] = True
+
+            LOG.info("{} - Link verificato.".format(params_t['username']),
+                     extra=set_client_ip(request))
             return HttpResponseRedirect(reverse('agency:change_password', kwargs={'t': t}))
         elif result == StatusCode.EXPIRED_TOKEN.value:
+
+            LOG.warning("{} - Link scaduto.".format(params_t['username']),
+                     extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                           {"statusCode": StatusCode.EXPIRED_TOKEN.value, "message": "Errore link scaduto!"})
         elif result == StatusCode.ERROR.value:
+
+            LOG.warning("{} - Link già utilizzato.".format(params_t['username']),
+                     extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                           {"statusCode": StatusCode.ERROR.value, "message": "Errore link già utilizzato!"})
         elif result == StatusCode.NOT_FOUND.value:
+            LOG.warning("{} - Link non trovato o non valido.".format(params_t['username']),
+                     extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                           {"statusCode": StatusCode.NOT_FOUND.value,
                            "message": "Errore link non trovato o non valido!"})
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
             'rao': get_attributes_RAO()
         }
@@ -942,7 +991,7 @@ def handler404(request, exception):
     """
 
     url = request.get_full_path()[1:]
-    LOG.error('handler404 => %s' % url)
+    LOG.error('handler404 => %s' % url, extra=set_client_ip(request))
     params = {
         'rao': get_attributes_RAO()
     }

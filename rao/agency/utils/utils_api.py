@@ -7,7 +7,6 @@ from django.conf import settings
 from django.http import HttpResponse
 
 import agency
-from .utils_cert import verify_policy_certificate
 from ..classes.choices import StatusCode, EndpointSign
 
 LOG = logging.getLogger(__name__)
@@ -21,7 +20,7 @@ def create_api(pin, admin_username, op_username):
     :param op_username: username dell'operatore da creare
     :return: StatusCode, message (-1 in caso di errore)
     """
-    LOG.debug("Api: {}".format(settings.SIGN_URL + EndpointSign.CREATE.value))
+    LOG.info("Api: {}".format(settings.SIGN_URL + EndpointSign.CREATE.value), extra=agency.utils.utils.set_client_ip())
     try:
         auth_token = hmac.new(str(pin).zfill(6).encode(), (admin_username + op_username).encode(), 'SHA256').hexdigest()
 
@@ -33,12 +32,17 @@ def create_api(pin, admin_username, op_username):
         content = request.urlopen(rec)
         response = content.read().decode()
         dic = json.loads(response)
-        LOG.debug("response: {}".format(str(response)))
+
         if dic['statusCode'] == 200:
             return StatusCode.OK.value, dic['message']
+        elif dic['statusCode'] == -5:
+            LOG.warning("{} - PIN ADMIN bloccato".format(admin_username), extra=agency.utils.utils.set_client_ip())
+        elif dic['statusCode'] == 401:
+            LOG.warning("{} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username),
+                        extra=agency.utils.utils.set_client_ip())
         return StatusCode.ERROR.value, -1
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value, -1
 
 
@@ -50,7 +54,7 @@ def reset_pin_api(pin, admin_username, op_username):
     :param op_username: username dell'operatore da creare
     :return: StatusCode, message (-1 in caso di errore)
     """
-    LOG.debug("Api: {}".format(settings.SIGN_URL + EndpointSign.RESET.value))
+    LOG.info("Api: {}".format(settings.SIGN_URL + EndpointSign.RESET.value), extra=agency.utils.utils.set_client_ip())
     try:
         auth_token = hmac.new(str(pin).zfill(6).encode(), (admin_username + op_username).encode(), 'SHA256').hexdigest()
 
@@ -63,12 +67,18 @@ def reset_pin_api(pin, admin_username, op_username):
         content = request.urlopen(rec)
         response = content.read().decode()
         dic = json.loads(response)
-        LOG.debug("response: {}".format(str(response)))
         if dic['statusCode'] == 200:
+            LOG.info("admin: {}, {} - PIN resettato".format(admin_username,op_username),
+                     extra=agency.utils.utils.set_client_ip())
             return StatusCode.OK.value, dic['message']
+        elif dic['statusCode'] == -5:
+            LOG.warning("{} - PIN ADMIN bloccato".format(admin_username), extra=agency.utils.utils.set_client_ip())
+        elif dic['statusCode'] == 401:
+            LOG.warning("admin: {}, {} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username,op_username),
+                        extra=agency.utils.utils.set_client_ip())
         return StatusCode.ERROR.value, -1
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value, -1
 
 
@@ -80,7 +90,7 @@ def disable_operator_api(pin, admin_username, op_username):
     :param op_username: username dell'operatore da creare
     :return: StatusCode, message (-1 in caso di errore)
     """
-    LOG.debug("Api:{}".format(settings.SIGN_URL + EndpointSign.DISABLE.value))
+    LOG.info("Api:{}".format(settings.SIGN_URL + EndpointSign.DISABLE.value), extra=agency.utils.utils.set_client_ip())
     try:
         auth_token = hmac.new(str(pin).zfill(6).encode(), (admin_username + op_username).encode(), 'SHA256').hexdigest()
 
@@ -93,13 +103,19 @@ def disable_operator_api(pin, admin_username, op_username):
         content = request.urlopen(rec)
         response = content.read().decode()
         dic = json.loads(response)
-        LOG.debug("response: {}".format(str(response)))
         if dic['statusCode'] == 200:
+            LOG.info("admin: {}, {} - Operatore disabilitato".format(admin_username,op_username),
+                     extra=agency.utils.utils.set_client_ip())
             return StatusCode.OK.value
+        elif dic['statusCode'] == -5:
+            LOG.warning("{} - PIN ADMIN bloccato".format(admin_username), extra=agency.utils.utils.set_client_ip())
+        elif dic['statusCode'] == 401:
+            LOG.warning("admin: {}, {} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username,op_username),
+                        extra=agency.utils.utils.set_client_ip())
         return StatusCode.ERROR.value
     except Exception as e:
         HttpResponse()
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value
 
 
@@ -112,7 +128,7 @@ def activate_op_api(username, old_pin, new_pin, cert=None):
     :param cert: certificato da caricare (solo nel caso di attivazione di un admin)
     :return: StatusCode
     """
-    LOG.debug("Api: {}".format(settings.SIGN_URL + EndpointSign.ACTIVATE.value))
+    LOG.info("Api: {}".format(settings.SIGN_URL + EndpointSign.ACTIVATE.value), extra=agency.utils.utils.set_client_ip())
     auth_token = hmac.new(str(old_pin).zfill(6).encode(), (username + str(new_pin).zfill(6)).encode(),
                           'SHA256').hexdigest()
     if cert:
@@ -128,10 +144,15 @@ def activate_op_api(username, old_pin, new_pin, cert=None):
                           headers={"Authorization": auth_token, "Username": username})
     content = request.urlopen(rec)
     response = content.read().decode()
-    LOG.debug("response: {}".format(str(response)))
     dic = json.loads(response)
     if dic['statusCode'] == 200:
         return StatusCode.OK.value
+    elif dic['statusCode'] == -5:
+        LOG.warning("{} - PIN bloccato".format(username), extra=agency.utils.utils.set_client_ip())
+    elif dic['statusCode'] == 401:
+        LOG.warning(
+            "{} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(username),
+            extra=agency.utils.utils.set_client_ip())
     return StatusCode.ERROR.value
 
 
@@ -144,7 +165,7 @@ def update_cert(pin, admin_username, cert):
     :return: StatusCode
     """
     try:
-        LOG.debug("Api: {}".format(settings.SIGN_URL + EndpointSign.UPLOAD.value))
+        LOG.info("Api: {}".format(settings.SIGN_URL + EndpointSign.UPLOAD.value), extra=agency.utils.utils.set_client_ip())
         auth_token = hmac.new(str(pin).zfill(6).encode(), (admin_username + cert).encode(), 'SHA256').hexdigest()
 
         data = parse.urlencode({'entity': agency.utils.utils_db.get_attributes_RAO().issuerCode,
@@ -157,12 +178,17 @@ def update_cert(pin, admin_username, cert):
         content = request.urlopen(rec)
         response = content.read().decode()
         dic = json.loads(response)
-        LOG.debug("response: {}".format(str(response)))
         if dic['statusCode'] == 200:
+            LOG.info("{}, {} - Certificato aggiornato".format(agency.utils.utils_db.get_attributes_RAO().issuerCode,
+                                                              admin_username),
+                     extra=agency.utils.utils.set_client_ip())
             return StatusCode.OK.value
+        LOG.warning("{}, {} - Aggiornamento certificato non riuscito".format(agency.utils.utils_db.get_attributes_RAO().issuerCode,
+                                                             admin_username),
+                    extra=agency.utils.utils.set_client_ip())
         return StatusCode.ERROR.value
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value
 
 
@@ -174,7 +200,7 @@ def sign_token_api(username, payload, pin):
     :param pin: pin di Firma dell'operatore
     :return: dic con parametri 'cert', 'alg' e 'sign'
     """
-    LOG.debug("Api: {}".format(settings.SIGN_URL + EndpointSign.SIGN.value))
+    LOG.info("Api: {}".format(settings.SIGN_URL + EndpointSign.SIGN.value), extra=agency.utils.utils.set_client_ip())
     json_payload = json.dumps(payload)
     auth_token = hmac.new(str(pin).zfill(6).encode(), (username + json_payload).encode(), 'SHA256').hexdigest()
     data = parse.urlencode({'payload': json_payload,
@@ -184,7 +210,6 @@ def sign_token_api(username, payload, pin):
                           headers={"Authorization": auth_token, "Username": username})
     content = request.urlopen(rec)
     response = content.read().decode()
-    LOG.debug("response: {}".format(str(response)))
     dic = json.loads(response)
     if dic['statusCode'] == 200:
         response_dict = {

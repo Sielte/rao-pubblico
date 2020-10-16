@@ -16,6 +16,7 @@ from cryptography.x509.extensions import UserNotice
 from cryptography.x509.oid import ExtensionOID
 
 from agency.classes.choices import StatusCode, CertRef, POLICY_OID
+from agency.utils.utils import set_client_ip
 from rao import settings
 
 LOG = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def check_expiration_certificate(cert_string):
         if certificate.not_valid_after > datetime.datetime.now() > certificate.not_valid_before:
             return True
     except Exception as e:
-        LOG.warning('Errore su check_expiration_certificate: {}'.format(str(e)))
+        LOG.warning('Errore su check_expiration_certificate: {}'.format(str(e)), extra=set_client_ip())
     return False
 
 
@@ -51,12 +52,10 @@ def verify_policy_certificate(cert_string):
                 for qualifier in qualifiers:
                     if isinstance(qualifier, UserNotice):
                         return True
-                LOG.debug('Verifica certificato fallita. Problema nella verifica del qualifier UserNotice: \n')
                 return False
-        LOG.debug('Verifica certificato fallita. Problema nella verifica dell\'OID:\n')
         return False
     except Exception as e:
-        LOG.warning('Errore su check_certificate: {}'.format(str(e)))
+        LOG.warning('Errore su check_certificate: {}'.format(str(e)), extra=set_client_ip())
         return False
 
 
@@ -70,9 +69,7 @@ def verify_certificate_chain(cert_string):
         certificate = crypto.load_certificate(crypto.FILETYPE_PEM, cert_string.encode())
         cert_x509 = x509.load_pem_x509_certificate(cert_string.encode(), default_backend())
     except Exception as e:
-        LOG.debug('Non sono riuscito a caricare il seguente certificato:')
-        LOG.debug(cert_string)
-        LOG.warning(str(e))
+        LOG.warning(str(e), extra=set_client_ip())
         return StatusCode.ERROR.value
 
     try:
@@ -100,7 +97,7 @@ def verify_certificate_chain(cert_string):
         crl_uri = get_crl_endpoint(certificate_policies)
 
         if crl_uri is None:
-            LOG.warning('Impossibile stabilire endpoint per CRL con aki = {}'.format(aki))
+            LOG.warning('Impossibile stabilire endpoint per CRL con aki = {}'.format(aki), extra=set_client_ip())
             return StatusCode.NOT_FOUND.value
 
         crl_latest = make_crl_store_path(crl_uri, aki) + ".crl"
@@ -127,9 +124,9 @@ def verify_certificate_chain(cert_string):
         return StatusCode.OK.value
     except Exception as e:
         type, value, tb = sys.exc_info()
-        LOG.warning(e)
-        LOG.warning('exception_value = {0}, value = {1}'.format(str(value), str(type)))
-        LOG.warning('tb = {}'.format(traceback.format_exception(type, value, tb)))
+        LOG.error(e, extra=set_client_ip())
+        LOG.error('exception_value = {0}, value = {1}'.format(str(value), str(type)), extra=set_client_ip())
+        LOG.error('tb = {}'.format(traceback.format_exception(type, value, tb)), extra=set_client_ip())
         return StatusCode.EXC.value
 
 
@@ -185,7 +182,7 @@ def get_crl_endpoint(certificate_policies):
         crl_endpoint = crl_point.full_name[0].value
         if 'ldap' not in crl_endpoint and isinstance(crl_endpoint, str):
             return crl_endpoint
-    LOG.critical('Nessun endpoint trovato.')
+    LOG.error('Nessun endpoint trovato.', extra=set_client_ip())
     return None
 
 
@@ -221,10 +218,10 @@ def _download_http_crl(endpoint, key_identifier):
             with open(crl_meta_dest, 'w') as f:
                 f.write(endpoint)
         else:
-            LOG.error('Errore durante il download della CRL con endpoint = {}'.format(endpoint))
+            LOG.error('Errore durante il download della CRL con endpoint = {}'.format(endpoint), extra=set_client_ip())
     except Exception as e:
-        LOG.error('Eccezione durante il download della CRL con key_identifier = {}'.format(key_identifier))
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error('Eccezione durante il download della CRL con key_identifier = {}'.format(key_identifier), extra=set_client_ip())
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
 
 
 def download_crl(endpoint, key_identifier):
@@ -256,8 +253,8 @@ def download_http_cert(endpoint):
             except:
                 cert = crypto.load_certificate(crypto.FILETYPE_PEM, r.content)
         else:
-            LOG.error('Errore durante il download della CRL con endpoint = {}'.format(endpoint))
+            LOG.error('Errore durante il download della CRL con endpoint = {}'.format(endpoint), extra=set_client_ip())
     except Exception as e:
-        LOG.error('Eccezione durante il download della CRL con endpoint = {}'.format(endpoint))
-        LOG.error(str(e))
+        LOG.error('Eccezione durante il download della CRL con endpoint = {}'.format(endpoint), extra=set_client_ip())
+        LOG.error(str(e), extra=set_client_ip())
     return cert

@@ -12,7 +12,7 @@ import re
 from agency.classes.choices import StatusCode
 from agency.classes.regex import passphrase_expression
 from agency.models import IdentityRequest, SettingsRAO, TokenUser
-from agency.utils.utils import format_id_card_issuer, encrypt_data
+from agency.utils.utils import format_id_card_issuer, encrypt_data, set_client_ip
 from agency.utils.utils_api import sign_token_api
 from rao import settings
 
@@ -126,7 +126,6 @@ def generate_ICRequestData(creation_time, user, rao, request_identity):
     if user['pec']:
         ICRequestData['spidAttributes'].__setitem__('optionalAttributes', {"digitalAddress": user['pec']})
     ICRequestData = json.dumps(ICRequestData)
-    LOG.debug("ICRequestData: {}".format(ICRequestData))
     return ICRequestData
 
 
@@ -193,7 +192,7 @@ def signed_token(user, op_username, pin):
             return obj
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
         obj = {"statusCode": StatusCode.EXC.value}
         return obj
 

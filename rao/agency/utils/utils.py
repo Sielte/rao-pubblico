@@ -33,6 +33,39 @@ from .utils_db import get_attributes_RAO, get_operator_by_username
 LOG = logging.getLogger(__name__)
 
 
+def set_client_ip(request=None):
+    """
+    Restituisce il dizionario "extra" da aggiungere alle chiamate dei LOG
+    :param request: request
+    :return: dizionario "extra"
+    """
+    ip = get_client_ip(request)
+    d = {'client_ip': ip}
+    return d
+
+
+def get_client_ip(request):
+    """
+    Restituisce l'IP del client
+    :param request: request
+    :return: IP del client
+    """
+
+    if not request:
+        return "N.D."
+
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', None)
+    client_ip = request.META.get('HTTP_CLIENT_IP', None)
+
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    elif client_ip:
+        ip = client_ip
+    else:
+        ip = request.META.get('REMOTE_ADDR', None)
+    return ip
+
+
 def json_default(value):
     """
     Funzione per convertire un attributo di una classe in formato JSON
@@ -114,11 +147,15 @@ def download_pdf(params, passphrase=None, pin=None):
     result = BytesIO()
 
     pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+    cf_user = params['fiscalNumber'] if passphrase else params['username']
     if not pdf.err:
+        LOG.info("{} - PDF scaricato".format(cf_user), extra=set_client_ip())
         filename = params['id'] + ".pdf" if passphrase else params['operator'] + ".pdf"
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename=' + filename
         return response
+
+    LOG.warning("{} - PDF non scaricato - download automatico non riuscito".format(cf_user), extra=set_client_ip())
     return Exception()
 
 
@@ -197,7 +234,7 @@ def delete_session_key(request):
             del request.session[key_name]
 
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip(request))
 
     return HttpResponse("Chiave Cancellata")
 
@@ -230,7 +267,7 @@ def load_select(request):
             data = None
 
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                       {"statusCode": StatusCode.EXC.value, "message": "Errore durante il caricamento della Select"})
 
@@ -269,9 +306,38 @@ def page_manager(current_page, list_view, entry_view=settings.ENTRY_FOR_PAGE):
     return pages
 
 
-def check_operator(username, password, status):
+def check_password(username, password, status, request=None):
     """
     Verifica se l'operatore esiste, è attivo e se la pass è errata/scaduta
+    :param request: request
+    :param username: codiceFiscale/username dell'operatore
+    :param password: password dell'operatore
+    :param status: status dell'operatore
+    :return: StatusCode
+    """
+    hash_pass_insert = hashlib.sha256(password.encode()).hexdigest()
+    user = Operator.objects.filter(fiscalNumber=username.upper(), status=status).last()
+    if user:
+        if not user.signStatus:
+            return StatusCode.SIGN_NOT_AVAIBLE.value
+        hash_pass = user.password
+        try:
+            jwt.decode(hash_pass, hash_pass_insert)
+            return StatusCode.OK.value
+        except jwt.ExpiredSignatureError:
+            return StatusCode.EXPIRED_TOKEN.value
+        except jwt.InvalidSignatureError:
+            return StatusCode.ERROR.value
+        except Exception as e:
+            LOG.warning('[{}] eccezione durante la verifica della password: {}'.format(username, e),
+                        extra=set_client_ip(request))
+    return StatusCode.EXC.value
+
+
+def check_operator(username, password, status, request=None):
+    """
+    Verifica se l'operatore esiste, è attivo e se la pass è errata/scaduta
+    :param request: request
     :param username: codiceFiscale/username dell'operatore
     :param password: password dell'operatore
     :param status: status dell'operatore
@@ -295,10 +361,15 @@ def check_operator(username, password, status):
             user.failureTimestamp = datetime.datetime.utcnow()
             if user.failureCounter >= 3:
                 user.status = False
+                LOG.warning("{} - Credenziali errate, Utente bloccato".format(username), extra=set_client_ip(request))
+            else:
+                LOG.warning("{} - Credenziali errate".format(username), extra=set_client_ip(request))
             user.save()
+
             return StatusCode.ERROR.value
         except Exception as e:
-            LOG.warning('[{}] eccezione durante la verifica della password: {}', (username, e))
+            LOG.warning('[{}] eccezione durante la verifica della password: {}'.format(username, e),
+                        extra=set_client_ip(request))
     return StatusCode.ERROR.value
 
 
@@ -338,7 +409,7 @@ def get_certificate(crt):
         return cert
 
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip())
     return
 
 
@@ -360,7 +431,7 @@ def decode_fiscal_number(request):
                                  })
 
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return JsonResponse({'statusCode': StatusCode.EXC.value})
 
     return JsonResponse({'statusCode': StatusCode.ERROR.value})
@@ -399,7 +470,7 @@ def encrypt_data(payload, passphrase):
         token.add_recipient(key)
         return token.serialize(compact=True)
     except Exception as e:
-        LOG.warning("Exception: {}".format(str(e)))
+        LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip())
         return None
 
 
@@ -423,7 +494,7 @@ def decrypt_data(encrypted_data, passphrase):
         jwetoken.deserialize(encrypted_data, key=key)
         return jwetoken.payload.decode()
     except Exception as e:
-        LOG.error("Exception: {}".format(str(e)))
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
         return None
 
 
@@ -447,7 +518,6 @@ def do_import(task_id, request):
         init_municipality(None)
         task.percentage = 99
         task.save()
-        LOG.debug("Oggetto request = {}".format(request))
         init_user(request)
         task.status = 'completed'
         task.percentage = 100
@@ -463,6 +533,11 @@ def check_import(request):
     Verifica lo stato di completamento del task in background
     """
     task = SetupTask.objects.first()
+
+    if task.status == 'completed':
+        LOG.info("Setup completato con successo.", extra=set_client_ip(request))
+    elif task.status == 'failed':
+        LOG.error("Errore durante il caricamento dati.", extra=set_client_ip(request))
     return JsonResponse({
         'statusCode': StatusCode.OK.value,
         'status': task.status,
