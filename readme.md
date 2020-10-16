@@ -46,7 +46,8 @@ Per la configurazione sono utilizzate le seguenti variabili di ambiente:
 | `MAIL_LOG_LEVEL`   | Livello di verbosità dei log che verranno inviati per email (predefinto `ERROR`) |
 | `PORTAL_LOG_LEVEL` | Livello di verbosità dei log del portale (predefinito `DEBUG`) |
 | `AGENCY_LOG_LEVEL` | Livello di verbosità dei log dell'agency (predefinito `DEBUG`) |
-| `SECRET_KEY_ENC`   | Una stringa alfanumerica utilizzare per la codifica delle chiavi. Se non impostata verrà utilizzato un valore generato casualmente.ì |
+| `SECRET_KEY_ENC`   | Una stringa alfanumerica utilizzare per la codifica delle chiavi. Se non impostata verrà utilizzato un valore generato casualmente. |
+| `RAO_NAME`         | Nome/Identificativo del R.A.O. (es. Catania) |
 
 
 Nel caso di utilizzo dell'immagine con *Docker* si consiglia di creare un *volume* con il comando:
@@ -64,9 +65,10 @@ docker run -d \
        -e DATABASE_NAME="/data/<nomedb>.sqlite3" \
        -e MAIL_LOG_LEVEL="ERROR" \
        -e AGENCY_LOG_LEVEL="INFO" \
+       -e RAO_NAME="<nomeRAO>" \
        --mount type=volume,source="<nome_volume",target="/data" \
        -p "<porta>:8000" \
-       "rao-app:lastest"  "/start"
+       "rao-app:latest"  "/start"
 ```
 
 ## Configurazione (inizializzazione dei dati)
@@ -109,6 +111,7 @@ Un ultimo passaggio necessario per l'attivazione del proprio account comporta l'
  * nuovo pin di Firma formato da 6 caratteri numerici
  * conferma pin
  * certificato 
+ * chiave privata
 
 L'utente amministratore sarà quindi attivo: giungerà sulla pagina di login e potrà effettuare l'accesso 
 con le credenziali inserite durante il processo di attivazione.
@@ -121,6 +124,7 @@ L'Operatore ADMIN potrà:
 * visualizzare l'elnco degli operatori
 * aggiungere un nuovo operatore
 * visualizzare la dashboard delle richieste di identificazione nel tempo
+* aggiornare certificato/chiave pubblica e ri-configurare il server di Posta in Uscita
 
 L'Operatore R.A.O potrà:
 * visualizzare l'elenco delle richieste di identità da lui effettuate
