@@ -681,7 +681,7 @@ class NewIdentityForm(Form):
     def clean_idCardIssueDate(self):
         self.issue_date = datetime.strptime(self.cleaned_data.get('idCardIssueDate'), '%d/%m/%Y').date()
         today = datetime.today().date()
-        if self.issue_date < today:
+        if self.issue_date <= today:
             return
         raise ValidationError("Data di rilascio non valida.")
 
@@ -977,7 +977,7 @@ class NewIdentityPinForm(Form):
     def clean_idCardIssueDate(self):
         self.issue_date = datetime.strptime(self.cleaned_data.get('idCardIssueDate'), '%d/%m/%Y').date()
         today = datetime.today().date()
-        if self.issue_date < today:
+        if self.issue_date <= today:
             return
         raise ValidationError("Data di rilascio non valida.")
 
