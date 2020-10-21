@@ -99,6 +99,7 @@ def init_municipality(request, file='ANPR_archivio_comuni.csv'):
             reader = csv.DictReader(csv_file, delimiter=',', skipinitialspace=True)
             buffer = []
             mun_name = ''
+            prov_sigla = ''
             for row in reader:
                 try:
                     ac = AddressCity.objects.filter(code=row['SIGLAPROVINCIA']).first()
@@ -107,7 +108,7 @@ def init_municipality(request, file='ANPR_archivio_comuni.csv'):
                                          code=row['SIGLAPROVINCIA'])
                         ac.save()
 
-                    if mun_name == row["DENOMINAZIONE_IT"]:
+                    if mun_name == row["DENOMINAZIONE_IT"] and prov_sigla == row['SIGLAPROVINCIA']:
                         am = buffer.pop()
                         am.dateEnd = row['DATACESSAZIONE'].strip()
                     else:
@@ -119,6 +120,7 @@ def init_municipality(request, file='ANPR_archivio_comuni.csv'):
 
                     buffer.append(am)
                     mun_name = row["DENOMINAZIONE_IT"]
+                    prov_sigla = row["SIGLAPROVINCIA"]
 
                 except Exception as e:
                     LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
