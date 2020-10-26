@@ -2,11 +2,11 @@ from django.core.validators import RegexValidator
 
 passphrase_expression = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!$?#=*+-.:])"
 
-regex_name = RegexValidator(regex=r'^[A-zÀ-ù\' ]{2,}$',
-                            message="Il campo nome deve contenere almeno 2 caratteri.")
+regex_name = RegexValidator(regex=r"^[A-zÀ-ù'\-, ]{2,}$",
+                            message="Il campo nome deve contenere almeno 2 caratteri e non può contenere alcuni caratteri speciali.")
 
-regex_surname = RegexValidator(regex=r"^[A-zÀ-ù' ]{2,}$",
-                               message="Il campo cognome deve contenere almeno 2 caratteri.")
+regex_surname = RegexValidator(regex=r"^[A-zÀ-ù'\-, ]{2,}$",
+                               message="Il campo cognome deve contenere almeno 2 caratteri e non può contenere alcuni caratteri speciali.")
 
 regex_cf = RegexValidator(regex=r'^[a-zA-Z]{6}[0-9]{2}[a-zA-Z][0-9]{2}[a-zA-Z0-9]{5}$',
                           message="Codice fiscale non valido.")

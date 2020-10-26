@@ -247,9 +247,12 @@ def load_select(request):
     code = request.GET.get('code')
     try:
         if request.GET.get('select') == 'placeOfBirth':
-            data = AddressMunicipality.objects.filter(city__code=code,
-                                                      dateStart__lt=request.GET.get('birth_date'),
-                                                      dateEnd__gt=request.GET.get('birth_date')).order_by('name')
+            if request.GET.get('birth_date'):
+                data = AddressMunicipality.objects.filter(city__code=code,
+                                                          dateStart__lt=request.GET.get('birth_date'),
+                                                          dateEnd__gt=request.GET.get('birth_date')).order_by('name')
+            else:
+                data = AddressMunicipality.objects.filter(city__code=code).order_by('name')
             return render(request, settings.TEMPLATE_URL_AGENCY + 'dropdown_options.html',
                           {'list': data, 'municipality': True})
         elif request.GET.get('select') == 'addressMunicipality':
@@ -423,7 +426,13 @@ def decode_fiscal_number(request):
         isvalid = codicefiscale.is_valid(cf) or codicefiscale.is_omocode(cf)
         decode_cf = codicefiscale.decode(cf)
         if isvalid:
+            am = AddressMunicipality.objects.filter(code__iexact=decode_cf['birthplace']['code']).first()
+            if am:
+                nation_code = 'Z000'
+            else:
+                nation_code = decode_cf['birthplace']['code']
             return JsonResponse({'statusCode': StatusCode.OK.value,
+                                 'codeOfNation': nation_code,
                                  'placeOfBirth': decode_cf['birthplace']['code'],
                                  'countyOfBirth': decode_cf['birthplace']['province'],
                                  'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),

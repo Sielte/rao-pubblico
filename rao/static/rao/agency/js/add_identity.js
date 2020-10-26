@@ -16,7 +16,7 @@ $.ajax({
     },
     success: function (data) {
         if (data["statusCode"] == 200) {
-            set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', 'Z000', data["countyOfBirth"], data["placeOfBirth"],
+            set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', data["codeOfNation"], data["countyOfBirth"], data["placeOfBirth"],
             date_format_change(data["dateOfBirth"]));
             document.getElementById("gender").value = data["gender"];
             $('#gender').selectpicker('refresh');
@@ -29,9 +29,11 @@ $.ajax({
 
 window.addEventListener('load', function () {
 
+    /**
     document.getElementById("nationOfBirth").disabled = true;
     document.getElementById("countyOfBirth").disabled = true;
     document.getElementById("placeOfBirth").disabled = true;
+    **/
     document.getElementById("dateOfBirth").disabled = true;
     document.getElementById("gender").disabled = true;
 
@@ -106,8 +108,13 @@ function set_birth_after_form(nation, city, municipality, nation_value, city_val
     if (code != 'Z000') {
         toggle_disable_select(city);
         toggle_disable_select(municipality);
-
     } else {
+        if (document.getElementById(city).disabled && document.getElementById(municipality).disabled) {
+            toggle_disable_select(city);
+            toggle_disable_select(municipality);
+        }
+        document.getElementById(city + "Help").innerHTML = "";
+        document.getElementById(municipality + "Help").innerHTML = "";
         $.ajax({
             url: url,
             data: {
@@ -128,10 +135,16 @@ function set_birth_after_form(nation, city, municipality, nation_value, city_val
                         'birth_date': birth_date
                     },
                     success: function (data) {
-                        document.getElementById(municipality).innerHTML = data;
-                        $("#" + municipality).selectpicker('refresh');
-                        document.getElementById(municipality).value = municipality_value;
-                        $("#" + municipality).selectpicker('refresh');
+                        if (data == ""){
+	                        $("#" + city).selectpicker('destroy');
+	                        $("#" + city).selectpicker('render');
+                        }
+                        else{
+	                        document.getElementById(municipality).innerHTML = data;
+	                        $("#" + municipality).selectpicker('refresh');
+	                        document.getElementById(municipality).value = municipality_value;
+	                        $("#" + municipality).selectpicker('refresh');
+                        }
                     }
                 });
             }
@@ -235,7 +248,7 @@ populate_select("countyOfBirth", "placeOfBirth");
 populate_select("addressCountry", "addressMunicipality");
 
 function date_format_change(date_with_slash) {
-    dmy = date_with_slash.split('/');
+    dmy= date_with_slash.split('/');
     return [dmy[2], dmy[1], dmy[0]].join('-');
 }
 
