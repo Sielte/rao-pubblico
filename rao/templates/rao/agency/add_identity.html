@@ -144,7 +144,7 @@
                                             <div class="row">
                                                 <div class="col-lg-4">
                                                     <p>Tipo documento:</p>
-                                                    {% if 'cartaIdentita' in params.user_detail.idCardType %} <p class="font-weight-bold">Carta d'Identit&aacute;</p>{% endif %}
+                                                    {% if 'cartaIdentita' in params.user_detail.idCardType %} <p class="font-weight-bold">Carta d'Identit&agrave;</p>{% endif %}
                                                     {% if 'passaporto' in params.user_detail.idCardType %} <p class="font-weight-bold">Passaporto</p>{% endif %}
                                                     {% if 'patenteGuida' in params.user_detail.idCardType %} <p class="font-weight-bold">Patente di Guida</p>{% endif %}
                                                 </div>
@@ -674,16 +674,10 @@
                 data_addressCountry_value = '{{ form.addressCountry.value }}'
                 data_addressMunicipality_value = '{{ form.addressMunicipality.value }}'
             {% endif %}
-            src="{% static "rao/agency/js/add_identity.js" %}"></script>
+            src="{% static "rao/agency/js/add_identity.js" %}?20201029"></script>
 
 <script>
 function enable_autopopulate_fields() {
-
-    /**
-    document.getElementById("nationOfBirth").disabled = false;
-    document.getElementById("countyOfBirth").disabled = false;
-    document.getElementById("placeOfBirth").disabled = false;
-    **/
     document.getElementById("dateOfBirth").disabled = false;
     document.getElementById("gender").disabled = false;
 }

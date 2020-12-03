@@ -32,6 +32,7 @@ class Operator(models.Model):
     idRole = models.ForeignKey(Role, verbose_name='Ruolo', on_delete=None)
     status = models.BooleanField(verbose_name='Stato', default=False, db_index=True)
     signStatus = models.BooleanField(verbose_name='Stato', default=False, db_index=True)
+    isActivated = models.BooleanField(verbose_name='Stato di attivazione', default=True, db_index=True)
     failureTimestamp = models.DateTimeField(verbose_name='Data tentativo errato', null=True)
     failureCounter = models.SmallIntegerField(verbose_name='Contatore tentativi errati', default=0)
 

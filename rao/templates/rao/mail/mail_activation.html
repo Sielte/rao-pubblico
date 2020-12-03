@@ -1,10 +1,5 @@
 {% extends "rao/mail/baseMail.html" %}
 
-{% block header_name %}
-    {{ mail_elements.rao_name }}
-{% endblock %}
-
-
 {% block message_title_first %}
     Gentile {{ mail_elements.nameUser }} {{ mail_elements.familyNameUser }},
     <br>clicca il link seguente per attivare il tuo account:
@@ -24,10 +19,6 @@ Utilizzalo per attivare la tua utenza di Firma.
 
 {% block message_title_second %}
     Ti ricordiamo che &eacute; possibile utilizzare il link solamente una volta.<br>
-{% endblock %}
-
-{% block comune %}
-   <h2>&nbsp;{{ mail_elements.rao_name }} </h2>
 {% endblock %}
 
    

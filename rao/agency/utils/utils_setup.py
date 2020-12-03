@@ -100,6 +100,7 @@ def init_municipality(request, file='ANPR_archivio_comuni.csv'):
             buffer = []
             mun_name = ''
             prov_sigla = ''
+
             for row in reader:
                 try:
                     ac = AddressCity.objects.filter(code=row['SIGLAPROVINCIA']).first()

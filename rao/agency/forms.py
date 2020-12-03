@@ -18,7 +18,7 @@ from .classes.choices import CARD_TYPE, ADDRESS_TYPE, CHOICE_SEX, ISSUER_TYPE, g
     get_choices_cryptotag, StatusCode
 from .classes.regex import regex_cap, regex_cie, regex_cf, regex_date, regex_email, regex_number, \
     regex_name, regex_password, regex_surname, regex_doc, regex_rao_name, regex_issuercode, \
-    regex_pwd_email, regex_patente, regex_email_port, regex_pin, regex_dim_pin
+    regex_pwd_email, regex_patente, regex_email_port, regex_pin, regex_dim_pin, regex_id_card_issuer
 from .utils.utils import check_ts, get_certificate, set_client_ip
 from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain
 
@@ -661,21 +661,16 @@ class NewIdentityForm(Form):
             raise ValidationError("Numero di documento non valido!")
         return
 
-    def clean_identificationExpirationDate(self):
-        expiration_date = datetime.strptime(self.cleaned_data.get('identificationExpirationDate'), '%d/%m/%Y').date()
-        today = datetime.today().date()
-        if expiration_date < today:
-            raise ValidationError("Documento scaduto.")
-
-        return
-
     issue_date = None
 
     def clean_idCardIssuer(self):
         type_doc_release = self.cleaned_data.get('typeDocRelease')
         if type_doc_release != 'ministeroTrasporti':
-            if self.cleaned_data.get('idCardIssuer') == '':
+            id_card_issuer = self.cleaned_data.get('idCardIssuer')
+            if id_card_issuer == '':
                 raise ValidationError("Campo obbligatorio!")
+            elif not re.match(regex_id_card_issuer, id_card_issuer):
+                raise ValidationError("Il campo deve iniziare con una maiuscola, seguito da minuscole.")
         return
 
     def clean_idCardIssueDate(self):
@@ -684,14 +679,6 @@ class NewIdentityForm(Form):
         if self.issue_date <= today:
             return
         raise ValidationError("Data di rilascio non valida.")
-
-    def clean_idCardExpirationDate(self):
-        expiration_date = datetime.strptime(self.cleaned_data.get('idCardExpirationDate'), '%d/%m/%Y').date()
-        today = datetime.today().date()
-
-        if expiration_date < today:
-            raise ValidationError("Documento scaduto.")
-        return
 
 
 class NewIdentityPinForm(Form):
@@ -957,21 +944,18 @@ class NewIdentityPinForm(Form):
             raise ValidationError("Numero di documento non valido!")
         return
 
-    def clean_identificationExpirationDate(self):
-        expiration_date = datetime.strptime(self.cleaned_data.get('identificationExpirationDate'), '%d/%m/%Y').date()
-        today = datetime.today().date()
-        if expiration_date < today:
-            raise ValidationError("Documento scaduto.")
-
-        return
 
     issue_date = None
 
     def clean_idCardIssuer(self):
         type_doc_release = self.cleaned_data.get('typeDocRelease')
         if type_doc_release != 'ministeroTrasporti':
-            if self.cleaned_data.get('idCardIssuer') == '':
+            id_card_issuer = self.cleaned_data.get('idCardIssuer')
+            if id_card_issuer == '':
                 raise ValidationError("Campo obbligatorio!")
+            elif not re.match(regex_id_card_issuer, id_card_issuer):
+                raise ValidationError("Il campo deve iniziare con una maiuscola, seguito da minuscole.")
+
         return
 
     def clean_idCardIssueDate(self):
@@ -981,14 +965,21 @@ class NewIdentityPinForm(Form):
             return
         raise ValidationError("Data di rilascio non valida.")
 
-    def clean_idCardExpirationDate(self):
-        expiration_date = datetime.strptime(self.cleaned_data.get('idCardExpirationDate'), '%d/%m/%Y').date()
-        today = datetime.today().date()
 
-        if expiration_date < today:
-            raise ValidationError("Documento scaduto.")
+class ErrorSetupForm(Form):
+    """
+    Modifica dati nel messaggio di errore del setup
+    """
+    fiscalNumber = CharField(widget=TextInput(attrs={'id': 'fiscalNumber', 'name': 'fiscalNumber'}),
+                             required=True,
+                             error_messages={'required': 'Campo obbligatorio!'},
+                             validators=[regex_cf])
 
-        return
+    issuerCode = CharField(
+        widget=TextInput(attrs={'id': 'issuerCode', 'name': 'issuerCode'}),
+        required=True,
+        error_messages={'required': 'Campo obbligatorio!'},
+        validators=[regex_issuercode])
 
 
 class CertSetupForm(Form):

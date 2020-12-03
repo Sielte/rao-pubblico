@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
+from email.mime.image import MIMEImage
 
-from django.core.mail import get_connection, send_mail, EmailMessage
+from django.core.mail import get_connection, EmailMessage
 from django.template.loader import render_to_string
 
 import agency
@@ -35,7 +36,7 @@ def get_conn_from_db(label, tmp_settings=None):
                 password = utils.decrypt_data(sr.password, settings.SECRET_KEY_ENC)
             except Exception as e:
                 error = True
-                LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
+                LOG.error("Exception: {}".format(str(e)))
         if not error:
             email_connections = {
                 'default': {
@@ -52,7 +53,7 @@ def get_conn_from_db(label, tmp_settings=None):
     connections = email_connections
     if not label in email_connections:
         err = 'Configurazione email ''%s'' non definita.' % (label,)
-        LOG.error(err, extra=agency.utils.utils.set_client_ip())
+        LOG.critical(err)
         raise Exception(err)
     options = connections[label]
     return options, get_connection(**options)
@@ -80,21 +81,19 @@ def send_email(to_email, subject, template, data, attachment=None, attachment_na
 
     for i in range(5):
         try:
-            if not attachment:
-                send_mail(subject, '', from_email, to_email, html_message=html_msg, connection=connection)
-            else:
-                email = EmailMessage(subject, html_msg, from_email, to_email, connection=connection)
+            email = EmailMessage(subject, html_msg, from_email, to_email, connection=connection)
+            if attachment:
                 for attach in attachment:
                     with open(settings.DATA_FILES_PATH + attach, 'r') as file:
                         email.attach(attach if not attachment_name else attachment_name, file.read(), 'text/csv')
-                email.content_subtype = "html"
-                email.send()
-            LOG.info('[%s] Mail con oggetto "%s" inviata - Connection: %s' % (to_email, subject, conn_label), extra=agency.utils.utils.set_client_ip())
+            email.content_subtype = "html"
+            email.send()
+            LOG.info('[%s] Mail con oggetto "%s" inviata - Connection: %s' % (to_email, subject, conn_label))
             return StatusCode.OK.value
         except Exception as e:
-            LOG.error('[%s] Errore nell\'invio della mail con oggetto "%s" - Connection: %s' % (
-                to_email, subject, conn_label), extra=agency.utils.utils.set_client_ip())
-            LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
+            LOG.warning('[%s] Errore nell\'invio della mail con oggetto "%s" - Connection: %s' % (
+                to_email, subject, conn_label))
+            LOG.warning("Exception: {}".format(str(e)))
             time.sleep(5)
             return StatusCode.EXC.value
 

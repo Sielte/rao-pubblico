@@ -16,8 +16,8 @@ $.ajax({
     },
     success: function (data) {
         if (data["statusCode"] == 200) {
-            set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', data["codeOfNation"], data["countyOfBirth"], data["placeOfBirth"],
-            date_format_change(data["dateOfBirth"]));
+            set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', data["codeOfNation"], data["countyOfBirth"],
+             data["placeOfBirth"], date_format_change(data["dateOfBirth"]),false);
             document.getElementById("gender").value = data["gender"];
             $('#gender').selectpicker('refresh');
             document.getElementById('dateOfBirth').value = data["dateOfBirth"];
@@ -29,17 +29,11 @@ $.ajax({
 
 window.addEventListener('load', function () {
 
-    /**
-    document.getElementById("nationOfBirth").disabled = true;
-    document.getElementById("countyOfBirth").disabled = true;
-    document.getElementById("placeOfBirth").disabled = true;
-    **/
     document.getElementById("dateOfBirth").disabled = true;
     document.getElementById("gender").disabled = true;
 
     var script_tag = document.getElementById('script_tag');
     is_form = JSON.parse(script_tag.getAttribute("data_is_form"));
-    console.log("is_form vale: " + is_form);
 
         if(document.getElementById("typeDocRelease").value == "ministeroTrasporti") {
             document.getElementById("idCardIssuer").disabled = true;
@@ -77,11 +71,11 @@ window.addEventListener('load', function () {
                 addressNation_value = script_tag.getAttribute("data_addressNation_value");
                 addressCountry_value = script_tag.getAttribute("data_addressCountry_value");
                 addressMunicipality_value = script_tag.getAttribute("data_addressMunicipality_value");
-
                 set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', nationOfBirth_value,
-                 countyOfBirth_value, placeOfBirth_value, date_format_change(dateOfBirth_value));
+                 countyOfBirth_value, placeOfBirth_value, date_format_change(dateOfBirth_value), is_form);
 
-                set_birth_after_form('addressNation', 'addressCountry', 'addressMunicipality', addressNation_value, addressCountry_value, addressMunicipality_value);
+                set_birth_after_form('addressNation', 'addressCountry', 'addressMunicipality', addressNation_value,
+                 addressCountry_value, addressMunicipality_value, '', is_form);
             }
             else {
                 $('#nationOfBirth').selectpicker('destroy');
@@ -96,8 +90,7 @@ window.addEventListener('load', function () {
 
 });
 
-
-function set_birth_after_form(nation, city, municipality, nation_value, city_value, municipality_value, birth_date) {
+function set_birth_after_form(nation, city, municipality, nation_value, city_value, municipality_value, birth_date, is_form) {
 
     document.getElementById(nation).value = nation_value;
     $('#' + nation).selectpicker('refresh');
@@ -106,8 +99,8 @@ function set_birth_after_form(nation, city, municipality, nation_value, city_val
     var code = document.getElementById(nation).value;
 
     if (code != 'Z000') {
-        toggle_disable_select(city);
-        toggle_disable_select(municipality);
+        toggle_disable_select(city, true);
+        toggle_disable_select(municipality, true);
     } else {
         if (document.getElementById(city).disabled && document.getElementById(municipality).disabled) {
             toggle_disable_select(city);
@@ -132,7 +125,8 @@ function set_birth_after_form(nation, city, municipality, nation_value, city_val
                     data: {
                         'code': city_value,
                         'select': municipality,
-                        'birth_date': birth_date
+                        'birth_date': birth_date,
+                        'is_form': is_form,
                     },
                     success: function (data) {
                         if (data == ""){
@@ -153,7 +147,9 @@ function set_birth_after_form(nation, city, municipality, nation_value, city_val
 }
 
 
-function toggle_disable_select(select) {
+
+
+function toggle_disable_select(select, new_nation = false) {
     select_to_change = document.getElementById(select);
     select_to_change.disabled = !select_to_change.disabled;
     if (select_to_change.disabled) {
@@ -161,7 +157,9 @@ function toggle_disable_select(select) {
         document.getElementById(select).selectedIndex = 0;
         $('#'+select).selectpicker('refresh');
     } else {
+        if(!new_nation) {
         document.getElementById(select + "Help").innerHTML = "";
+        }
     }
 
 }

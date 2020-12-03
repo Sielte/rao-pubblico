@@ -102,7 +102,7 @@ def generate_ICRequestData(creation_time, user, rao, request_identity):
                 "email": user['email'],
                 "idCard": {
                     "idCardType": user['idCardType'],
-                    "idCardDocNumber": user['idCardDocNumber'].replace(" ", ""),
+                    "idCardDocNumber": user['idCardDocNumber'],
                     "idCardIssuer": format_id_card_issuer(user['idCardIssuer']),
                     "idCardIssueDate": user['idCardIssueDate'].strftime("%Y-%m-%d"),
                     "idCardExpirationDate": user['idCardExpirationDate'].strftime("%Y-%m-%d")
@@ -123,6 +123,8 @@ def generate_ICRequestData(creation_time, user, rao, request_identity):
             }
         }
     }
+
+
     if user['pec']:
         ICRequestData['spidAttributes'].__setitem__('optionalAttributes', {"digitalAddress": user['pec']})
     ICRequestData = json.dumps(ICRequestData)
@@ -167,7 +169,6 @@ def signed_token(user, op_username, pin):
         "fiscalNumber": user['fiscalNumber'],
         "encryptedData": userToken['encryptedData']
     }
-
     tokenSigillato = None
 
     try:

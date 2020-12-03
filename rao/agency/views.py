@@ -5,6 +5,8 @@ import json
 import logging
 
 # Core Django imports
+import re
+
 from django.conf import settings
 from django.core import signing
 from django.http import HttpResponseRedirect
@@ -14,11 +16,11 @@ from django.urls import reverse
 # Imports from your apps
 import agency
 from rao.settings import BASE_URL
-from .classes.choices import AlertType, StatusCode
+from .classes.choices import AlertType, StatusCode, PageRedirect
 from .decorators import login_required, admin_required, operator_required, only_one_admin
 from .forms import LoginForm, NewOperatorForm, NewIdentityForm, \
     ChangePasswordForm, SetupForm, RecoveryForm, ChangePinForm, NewOperatorPinForm, ChangePinFileForm, \
-    NewIdentityPinForm, EmailSetupForm, CertSetupForm
+    NewIdentityPinForm, EmailSetupForm, CertSetupForm, ErrorSetupForm
 from .utils.mail_utils import send_email
 from .utils.utils import check_operator, display_alert, render_to_pdf, page_manager, is_admin, \
     fix_name_surname, download_pdf, get_certificate, from_utc_to_local, set_client_ip
@@ -27,7 +29,8 @@ from .utils.utils_db import get_all_operator, get_attributes_RAO, update_passwor
     search_filter, create_operator, get_all_idr, create_identity, get_operator_by_username, \
     create_identity_request, get_identification_report, get_verify_mail_by_token, send_recovery_link, \
     create_verify_mail_token, set_is_verified, get_idr_filter_operator, get_status_operator, \
-    delete_identity_request, update_sign_field_operator, update_status_operator, update_emailrao
+    delete_identity_request, update_sign_field_operator, update_status_operator, update_emailrao, \
+    update_is_activated_field_operator
 from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check, init_user
 from .utils.utils_token import signed_token, create_token_file, delete_token_file
 
@@ -85,7 +88,7 @@ def login(request):
         if request.method == 'POST':
 
             form = LoginForm(request.POST)
-            username = request.POST.get('usernameField').upper()
+            username = re.sub(r"[\n\t\s]*", "", request.POST.get('usernameField').upper())
             password = request.POST.get('passwordField')
 
             if form.is_valid():
@@ -93,30 +96,34 @@ def login(request):
                 if not username or not password:
                     error = "I campi username e password sono obbligatori"
                 else:
-                    result = check_operator(username, password, True, request)
-                    if result == StatusCode.OK.value or result == StatusCode.EXPIRED_TOKEN.value:
+                    result = check_operator(username, password, request)
+                    if result in (StatusCode.OK.value, StatusCode.EXPIRED_TOKEN.value, StatusCode.FORBIDDEN.value):
                         request.session["username"] = username
                         params = {
                             'username': username,
                         }
-                        if result == StatusCode.OK.value:
-                            params['is_admin'] = is_admin(username)
-                            t = signing.dumps(params)
-                            request.session["is_authenticated"] = True
-                            LOG.info("{} - Utente loggato".format(username), extra=set_client_ip(request))
-                            return HttpResponseRedirect(reverse('agency:list_identity', kwargs={'t': t, 'page': 1}))
-                        else:
+                        if result == StatusCode.EXPIRED_TOKEN.value:
                             params['psw_expired'] = True
                             t = signing.dumps(params)
                             request.session['redirect'] = True
                             LOG.info("{} - Credenziali dell'utente scadute".format(username), extra=set_client_ip(request))
                             return HttpResponseRedirect(reverse('agency:change_password', kwargs={'t': t}))
-                    elif result == StatusCode.SIGN_NOT_AVAIBLE.value:
+                        else:
+                            params['is_admin'] = is_admin(username)
+                            t = signing.dumps(params)
+                            request.session["is_authenticated"] = True
+                            LOG.info("{} - Utente loggato".format(username), extra=set_client_ip(request))
+                            return HttpResponseRedirect(reverse('agency:list_identity', kwargs={'t': t, 'page': 1}))
+                    elif result == StatusCode.SIGN_NOT_AVAILABLE.value:
                         params = {
                             'username': username,
                         }
                         t = signing.dumps(params)
                         return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
+                    elif result == StatusCode.UNAUTHORIZED.value:
+                        error = "Credenziali bloccate. Contattare l'amministratore per reimpostare la password " \
+                                "attraverso l'invio di una nuova mail dalla sezione 'Lista Operatori' "
+                        LOG.info("{} - Credenziali bloccate.".format(username), extra=set_client_ip(request))
 
                 messages = display_alert(AlertType.DANGER, error)
 
@@ -148,17 +155,27 @@ def recovery_password(request):
         success = False
         if request.method == 'POST':
             form = RecoveryForm(request.POST)
-            username = request.POST.get('usernameField').upper()
+            username = re.sub(r"[\n\t\s]*", "", request.POST.get('usernameField').upper())
             if form.is_valid():
-                result = send_recovery_link(username)
+                operator = get_operator_by_username(username)
+                if operator.status:
+                    result = send_recovery_link(username, PageRedirect.CHANGE_PSW.value)
+                else:
+                    result = StatusCode.ERROR.value
+
                 if result == StatusCode.OK.value:
                     LOG.info("{} - Mail per cambio password inviata".format(username), extra=set_client_ip(request))
                     messages = display_alert(AlertType.SUCCESS,
                                              "È stata inviata una mail di verifica all'indirizzo mail fornito!")
                     success = True
-                elif result == StatusCode.NOT_FOUND.value or result == StatusCode.ERROR.value:
-                    messages = display_alert(AlertType.DANGER, "Utente non presente sul sistema")
+                elif result == StatusCode.NOT_FOUND.value:
+                    messages = display_alert(AlertType.DANGER, "Utente non presente sul sistema.")
                     LOG.warning("{} - Utente non trovato".format(username), extra=set_client_ip(request))
+                elif result == StatusCode.ERROR.value:
+                    messages = display_alert(AlertType.DANGER, "Credenziali bloccate. Contattare l'amministratore per "
+                                                               "reimpostare la password attraverso l'invio di una nuova "
+                                                               "mail dalla sezione 'Lista Operatori' ")
+                    LOG.warning("{} - Utente disabilitato".format(username), extra=set_client_ip(request))
                 else:
                     messages = display_alert(AlertType.DANGER, "Si è verificato un errore!")
                     LOG.error("{} - Errore durante il recupero password utente".format(username), extra=set_client_ip(request))
@@ -227,10 +244,11 @@ def add_operator(request, t):
     """
     try:
         messages = None
+        admin = get_operator_by_username(request.session['username'])
         params = {
             'rao': get_attributes_RAO(),
             'is_admin': is_admin(request.session['username']),
-            'active_operator': get_operator_by_username(request.session['username'])
+            'active_operator': admin
         }
         form = ()
         if request.method == 'POST':
@@ -240,12 +258,13 @@ def add_operator(request, t):
                 form = NewOperatorPinForm(request.POST)
 
             if form.is_valid():
-                params['operator'] = request.POST.get('fiscalNumber').upper()
+                params['operator'] = re.sub(r"[\n\t\s]*", "", request.POST.get('fiscalNumber').upper())
 
                 if 'add_operator' not in request.POST:
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'add_operator.html',
                                   {'params': params, 'token': t, 'form': form})
-
+                elif admin and not admin.signStatus:
+                    return HttpResponseRedirect(reverse('agency:logout_agency'))
                 else:
                     result, pin = create_operator(request.session['username'], request.POST)
                     if result == StatusCode.OK.value:
@@ -386,9 +405,11 @@ def add_identity(request, t):
                 form = NewIdentityPinForm(request.POST)
 
             if form.is_valid():
-                if request.session['identified']:
+                if request.session['identified'] is True and \
+                        request.session['last_cf'] == request.POST.get('fiscalNumber').upper():
                     return HttpResponseRedirect(reverse('agency:list_identity', kwargs={'t': t, 'page': 1}))
                 else:
+                    request.session['identified'] = False
                     ud = create_identity(request, active_operator.id)
                     if ud:
                         params = {
@@ -404,6 +425,7 @@ def add_identity(request, t):
                             params['user_detail'] = json.dumps(ud.to_json())
                             params['pin'] = request.POST.get('pinField')
                             t = signing.dumps(params)
+                            request.session['last_cf'] = ud.fiscalNumber
                             LOG.info("operator: {}, {} - Step1 identificazione OK - Form compilato".format(
                                 request.session['username'], ud.fiscalNumber), extra=set_client_ip(request))
                             return HttpResponseRedirect(reverse('agency:summary_identity', kwargs={'t': t}))
@@ -419,7 +441,7 @@ def add_identity(request, t):
                 }
                 messages = display_alert(AlertType.DANGER, "Campi della form vuoti o non validi")
                 LOG.warning("{} - Campi della form vuoti o non validi".format(
-                                request.session['username']), extra=set_client_ip(request))
+                    request.session['username']), extra=set_client_ip(request))
         return render(request, settings.TEMPLATE_URL_AGENCY + 'add_identity.html',
                       {'params': params, 'token': t, 'form': form, 'messages': messages})
     except Exception as e:
@@ -447,6 +469,14 @@ def summary_identity(request, t):
     id_request = None
     try:
         params = signing.loads(t)
+        operator = get_operator_by_username(request.session['username'])
+
+        if not operator.signStatus:
+            LOG.info(
+                "operator: {}, - Il PIN è bloccato. Impossibile generare la richiesta di identificazione.".format(
+                    request.session['username']), extra=set_client_ip(request))
+            return HttpResponseRedirect(reverse('agency:logout_agency'))
+
         if request.session['identified']:
             messages = display_alert(AlertType.DANGER, "Identificazione già effettuata")
         else:
@@ -466,14 +496,13 @@ def summary_identity(request, t):
                     if id_request:
                         delete_identity_request(id_request)
 
-
                     LOG.warning("operator: {}, {} - Step2 identificazione KO - Token non creato".format(
                         request.session['username'],identity['fiscalNumber']), extra=set_client_ip(request))
                     if dict_token['statusCode'] == StatusCode.UNAUTHORIZED.value:
                         return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                                       {"statusCode": StatusCode.UNAUTHORIZED.value,
                                        "message": "Il pin inserito non è corretto."})
-                    elif dict_token['statusCode'] == StatusCode.SIGN_NOT_AVAIBLE.value:
+                    elif dict_token['statusCode'] == StatusCode.SIGN_NOT_AVAILABLE.value:
                         update_sign_field_operator(request.session['username'], False)
                         return HttpResponseRedirect(reverse('agency:logout_agency'))
                     else:
@@ -497,30 +526,33 @@ def summary_identity(request, t):
                 params['identity'] = identity
                 params['rao'] = get_attributes_RAO()
                 params['active_operator'] = get_operator_by_username(request.session['username'])
-                timestamp = from_utc_to_local(id_request.timestamp_identification).strftime('%d/%m/%Y %H:%M')
+                timestamp = from_utc_to_local(id_request.timestamp_identification)
+
                 mail_elements = {
                     'base_url': BASE_URL,
                     'rao_name': get_attributes_RAO().name,
                     'name_user': identity['name'],
                     'surname_user': identity['familyName'],
-                    'operator': params['active_operator'],
-                    'timestamp': timestamp
+                    'date': timestamp.strftime('%d/%m/%Y'),
+                    'time': timestamp.strftime('%H:%M')
                 }
                 messages = display_alert(AlertType.SUCCESS, "Identificazione avvenuta con successo!")
                 request.session['identified'] = True
 
                 email_status_code = send_email([identity['email']], "SPID - Identificazione presso Sportello Pubblico",
-                                              settings.TEMPLATE_URL_MAIL + 'mail_passphrase.html',
-                                              {'passphrase2': dict_token['passphrase'][6:12],
-                                               'mail_elements': mail_elements},
-                                              create_token_file(dict_token,
-                                                                str(id_request.uuid_identity) + "_tuo_token.txt"))
+                                               settings.TEMPLATE_URL_MAIL + 'mail_passphrase.html',
+                                               {'passphrase2': dict_token['passphrase'][6:12],
+                                                'mail_elements': mail_elements},
+                                               create_token_file(dict_token,
+                                                                 str(id_request.uuid_identity) + "_tuo_token.txt"))
 
                 if email_status_code == StatusCode.OK.value:
                     delete_token_file(str(id_request.uuid_identity) + "_tuo_token.txt")
                     LOG.info("operator: {}, {} - Step2 identificazione OK - Token creato".format(
                         request.session['username'], identity['fiscalNumber']), extra=set_client_ip(request))
                 else:
+                    if id_request:
+                        delete_identity_request(id_request)
                     LOG.warning("operator: {}, {} - Step2 identificazione - Invio mail non riuscita".format(
                         request.session['username'],identity['fiscalNumber']), extra=set_client_ip(request))
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
@@ -630,8 +662,15 @@ def change_pin(request, t):
     try:
         params_t = signing.loads(t)
         username = params_t['username']
-        messages = []
+        if 'alert_type' in params_t and 'alert_message' in params_t:
+            messages = display_alert(AlertType.DANGER, params_t.pop('alert_message')) if params_t.pop('alert_type') == 'danger' \
+                else display_alert(AlertType.SUCCESS, params_t.pop('alert_message'))
 
+        else:
+            messages = []
+
+        error_form = None
+        error = "Si è verificato un problema con l'aggiornamento, riprova inserendo i dati corretti."
         if get_operator_by_username(username).signStatus:
             LOG.warning("{} - Accesso negato.".format(username), extra=set_client_ip(request))
             return HttpResponseRedirect(reverse('agency:logout_agency'))
@@ -662,6 +701,7 @@ def change_pin(request, t):
 
                 if status_code_activate == StatusCode.OK.value:
                     update_sign_field_operator(username)
+                    update_is_activated_field_operator(username)
                     if is_admin(username):
                         request.session['setup_ok'] = True
                     else:
@@ -670,12 +710,20 @@ def change_pin(request, t):
                         del request.session['passwordChanged']
                     LOG.info("{} - PIN modificato.".format(username), extra=set_client_ip(request))
                     return HttpResponseRedirect(reverse('agency:logout_agency'))
-
-            error = "Si è verificato un problema con l'aggiornamento, riprova inserendo i dati corretti."
-            messages = display_alert(AlertType.DANGER, error)
+                elif status_code_activate == StatusCode.ERROR.value:
+                    if is_admin(username):
+                        error_form = ErrorSetupForm()
+                        messages = display_alert(AlertType.DANGER, error, "Verifica dati inseriti",
+                                                 "$('#modal').modal('show');")
+                        params['fiscalNumber'] = username
+                        params['issuerCode'] = get_attributes_RAO().issuerCode
+                    else:
+                        messages = display_alert(AlertType.DANGER, error)
+            if messages.__len__() == 0:
+                messages = display_alert(AlertType.DANGER, error)
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'change_pin.html',
-                      {'form': form, 'params': params, 'messages': messages, 'token': t})
+                      {'form': form, 'error_form': error_form, 'params': params, 'messages': messages, 'token': t})
     except Exception as e:
         LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
         params = {
@@ -703,7 +751,7 @@ def change_password(request, t):
         form = ChangePasswordForm()
         params = {
             'rao': get_attributes_RAO(),
-            'first_pass': not get_status_operator(username)
+            'first_pass': get_status_operator(username)
         }
         if request.method == 'POST':
             form = ChangePasswordForm(request.POST)
@@ -730,15 +778,14 @@ def change_password(request, t):
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'change_password.html',
                                   {'params': params, 'messages': messages, 'token': t})
                 elif 'is_admin' not in params_t:
-                    is_activation = True if 'pin' in params_t else False
-
-                    result = update_password_operator(username, password, not is_activation, request)
+                    operator = get_operator_by_username(username)
+                    result = update_password_operator(username, password, operator.status, request)
                     if result == StatusCode.OK.value:
                         if 'psw_expired' not in params_t:
                             set_is_verified(t)
                         request.session['passwordChanged'] = True
                         LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
-                        if is_activation:
+                        if not operator.isActivated:
                             return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
                         return HttpResponseRedirect(reverse('agency:logout_agency'))
                     elif result == StatusCode.LAST_PWD.value:
@@ -758,6 +805,7 @@ def change_password(request, t):
                 LOG.warning("{} - Password non valida.".format(username), extra=set_client_ip(request))
                 error = "Si è verificato un problema con l'aggiornamento della password, riprova."
                 messages = display_alert(AlertType.DANGER, error)
+
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'change_password.html',
                       {'form': form, 'params': params, 'messages': messages, 'token': t})
@@ -820,7 +868,7 @@ def admin_setup(request, t):
                                                  rao_email_crypto_type, rao_email_port, smtp_mail_from_field)
                     if not is_updated:
                         LOG.warning("{}, {} - Configurazione SMTP non riuscita.".format(agency.utils.utils_db.get_attributes_RAO().issuerCode,
-                                    request.session['username']), extra=set_client_ip(request))
+                                                                                        request.session['username']), extra=set_client_ip(request))
                         messages = display_alert(AlertType.DANGER,
                                                  "Si è verificato un errore durante l'aggiornamento dei dati.")
                         return render(request, settings.TEMPLATE_URL_AGENCY + 'setup.html',
@@ -863,7 +911,7 @@ def initial_setup(request):
                         surname = fix_name_surname(form.cleaned_data['surnameField'])
                         email = form.cleaned_data['usernameField']
                         username = form.cleaned_data['fiscalNumberField'].upper()
-                        issuer_code = form.cleaned_data['issuerCodeField']
+                        issuer_code = re.sub(r"[\n\t\s]*", "", form.cleaned_data['issuerCodeField'])
                         rao_name = form.cleaned_data['nameRAOField']
                         rao_email = form.cleaned_data['emailRAOField']
                         rao_host = form.cleaned_data['hostField']
@@ -904,12 +952,13 @@ def initial_setup(request):
                                 create_verify_mail_token(email, t)
                                 messages = display_alert(AlertType.SUCCESS,
                                                          "È stata appena inviata una mail di verifica "
-                                                         "all'indirizzo indicato.")
+                                                         "all'indirizzo indicato. Puoi chiudere questa finestra e "
+                                                         "proseguire con le istruzioni che troverai nella email inviata.")
                                 LOG.info("IPA: {}, {} - Form compilato con successo.".format(issuer_code,username),
                                          extra=set_client_ip(request))
                             else:
                                 LOG.warning("{} - Configurazione SMTP errata.".format(username),
-                                         extra=set_client_ip(request))
+                                            extra=set_client_ip(request))
                                 messages = display_alert(AlertType.DANGER,
                                                          "Si è verificato un errore durante l'invio della mail "
                                                          "di verifica, controlla che la configurazione SMTP "
@@ -934,40 +983,44 @@ def initial_setup(request):
 @only_one_admin
 def redirect_page(request, t):
     """
-    Verifica token per reindirizzare su change_password
+    Verifica token per reindirizzare su change_password o change pin
     :param request: request
     :param t: token
     """
     try:
 
         params_t = signing.loads(t)
-        if 'psw_expired' not in params_t:
+        if 'psw_expired' in params_t:
+            result = StatusCode.OK.value
+        else:
             vm = get_verify_mail_by_token(t)
             result = vm.isValid(token=t)
-        else:
-            result = StatusCode.OK.value
 
         if result == StatusCode.OK.value:
             request.session['redirect'] = True
 
             LOG.info("{} - Link verificato.".format(params_t['username']),
                      extra=set_client_ip(request))
-            return HttpResponseRedirect(reverse('agency:change_password', kwargs={'t': t}))
+
+            if 'change_pin' in params_t:
+                return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
+            else:
+                return HttpResponseRedirect(reverse('agency:change_password', kwargs={'t': t}))
         elif result == StatusCode.EXPIRED_TOKEN.value:
 
             LOG.warning("{} - Link scaduto.".format(params_t['username']),
-                     extra=set_client_ip(request))
+                        extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                           {"statusCode": StatusCode.EXPIRED_TOKEN.value, "message": "Errore link scaduto!"})
         elif result == StatusCode.ERROR.value:
 
             LOG.warning("{} - Link già utilizzato.".format(params_t['username']),
-                     extra=set_client_ip(request))
+                        extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                           {"statusCode": StatusCode.ERROR.value, "message": "Errore link già utilizzato!"})
         elif result == StatusCode.NOT_FOUND.value:
             LOG.warning("{} - Link non trovato o non valido.".format(params_t['username']),
-                     extra=set_client_ip(request))
+                        extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'error.html',
                           {"statusCode": StatusCode.NOT_FOUND.value,
                            "message": "Errore link non trovato o non valido!"})

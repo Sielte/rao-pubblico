@@ -2,6 +2,62 @@
 {% load staticfiles %}
 
 {% block page-content %}
+
+
+<div class="mx-change-pass-modal">
+    <div class="modal alert-modal" tabindex="-1" role="dialog" id="modal">
+        <form id="error_form" action="{% url 'agency:change_setup_value' token %}"
+              method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <svg class="icon">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-pencil"></use>
+                        </svg>
+                        <h5 class="modal-title">Verifica i dati precedentemente inseriti:
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Se ti sei assicurato di aver inserito correttamente il PIN temporaneo, verifica che il <b>Codice Fiscale</b> e il <b>Codice IPA</b> siano corretti.
+                            <br>
+                            Puoi modificarli su questa schermata:</p>
+
+                        <div class="form-row pt-5">
+                            <div class="form-group col-md-6">
+                                <input type="text" class="form-control" id="fiscalNumber" name="fiscalNumber" autocomplete="0"
+                                       aria-describedby="fiscalNumberHelp" {% if error_form.fiscalNumber.value %}
+                                       value="{{ error_form.fiscalNumber.value }}" {% else %}
+                                       value="{{ params.fiscalNumber }}" {% endif %}>
+                                <label for="fiscalNumber">Codice Fiscale</label>
+                                <small id="fiscalNumberHelp"
+                                       class="form-text text-danger"> {{ error_form.fiscalNumber.errors }} </small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <input type="text" class="form-control" id="issuerCode" name="issuerCode" autocomplete="0"
+                                       aria-describedby="issuerCodeHelp" {% if error_form.issuerCode.value %}
+                                       value="{{ error_form.issuerCode.value }}" {% else %}
+                                       value="{{ params.issuerCode }}" {% endif %}>
+                                <label for="issuerCode">Codice IPA</label>
+                                <small id="issuerCodeHelp"
+                                       class="form-text text-danger"> {{ error_form.issuerCodeField.errors }} </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal" >Annulla
+                        </button>
+                        <button class="btn btn-primary btn-sm" type="submit" id="reset_pin_btn" >Salva</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
 <div class="section section-muted bg-white">
     <div class="section-content mx-auto col-sm-10">
         <div class="card-deck">
@@ -121,31 +177,31 @@
                                 </div>
                             </div>
 
-{% if params.is_admin %}
-                                                    <div class="row ">
-                            <div class="col-lg-6 mx-auto" >
-                                <label class="custom-file-label text-white" >
-                                    Carica il Certificato che ti è stato fornito.
-                                    Il Certificato è solitamente un file con estensione .crt oppure .cer
-                                </label>
-                                {{ form.uploadCertificate }}
+                            {% if params.is_admin %}
+                            <div class="row ">
+                                <div class="col-lg-6 mx-auto" >
+                                    <label class="custom-file-label text-white" >
+                                        Carica il Certificato che ti è stato fornito.
+                                        Il Certificato è solitamente un file con estensione .crt oppure .cer
+                                    </label>
+                                    {{ form.uploadCertificate }}
 
-                                <small id="uploadCertificate"
-                                       class="form-text text-danger pb-5">{{ form.uploadCertificate.errors }}</small>
+                                    <small id="uploadCertificate"
+                                           class="form-text text-danger pb-5">{{ form.uploadCertificate.errors }}</small>
+                                </div>
+                            </div>
+                            <div class="row ">
+                                <div class="col-lg-6 mx-auto" >
+                                    <label class="custom-file-label text-white" >Carica la tua Chiave Privata.
+                                        La Chiave Privata è stata generata per effettuare la richiesta del Certificato ad AgID.
+                                    </label>
+                                    {{ form.uploadPrivateKey }}
+                                    <small id="uploadPrivateKey"
+                                           class="form-text text-danger">{{ form.uploadPrivateKey.errors }}</small>
+                                </div>
                             </div>
                         </div>
-                        <div class="row ">
-                            <div class="col-lg-6 mx-auto" >
-                                <label class="custom-file-label text-white" >Carica la tua Chiave Privata.
-                                    La Chiave Privata è stata generata per effettuare la richiesta del Certificato ad AgiD.
-                                </label>
-                                {{ form.uploadPrivateKey }}
-                                <small id="uploadPrivateKey"
-                                       class="form-text text-danger">{{ form.uploadPrivateKey.errors }}</small>
-                            </div>
-                        </div>
-                        </div>
-{% endif %}
+                        {% endif %}
 
                         <div class="row d-flex justify-content-center  pt-{% if form.confirmPinField.errors %}4{% else %}2{% endif %} ">
                             <button type="submit" class="btn btn-white text-primary col-sm-4 col-10"

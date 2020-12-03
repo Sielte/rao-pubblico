@@ -5,7 +5,7 @@ import hashlib
 import logging
 
 # Third-party app imports
-import locale
+import re
 import sys
 import traceback
 
@@ -20,14 +20,13 @@ from django.urls import reverse
 # Imports from your apps
 
 import agency
-from agency.classes.choices import RoleTag, StatusCode, RequestStatus
+from agency.classes.choices import RoleTag, StatusCode, RequestStatus, PageRedirect
 from agency.classes.tmp_mail_settings import TempMailSettings
 from agency.classes.user_detail import UserDetail
 from agency.models import Operator, IdentityRequest, SettingsRAO, Role, TokenUser, VerifyMail
 from agency.utils import utils
 from agency.utils.mail_utils import send_email
 from django.conf import settings
-
 
 from agency.utils.utils_api import create_api, reset_pin_api, disable_operator_api
 from rao.settings import BASE_URL
@@ -75,7 +74,8 @@ def create_first_operator(request):
                                     fiscalNumber=request.session['usernameField'],
                                     email=request.session['emailField'],
                                     idRole=Role.objects.get(role=RoleTag.ADMIN.value),
-                                    password=hash_pass_insert.decode("UTF-8"))
+                                    password=hash_pass_insert.decode("UTF-8"),
+                                    isActivated=False)
 
             return True
     except Exception as e:
@@ -113,24 +113,41 @@ def reset_pin_operator(request, page, t):
     :return: HttpResponseRedirect di list_operator
     """
     try:
+        username = request.session.get('username')
         operator = get_operator_by_username(request.POST.get('username_op'))
+        admin = get_operator_by_username(username)
+
+        if admin and not admin.signStatus:
+            return HttpResponseRedirect(reverse('agency:logout_agency'))
 
         if operator and operator.idRole.role is not RoleTag.ADMIN.value:
 
             pin = request.POST.get('pinField')
 
-            status_code_reset, tmp_pin = reset_pin_api(pin, request.session.get('username'),
-                                                       request.POST.get('username_op'))
+            status_code_reset, tmp_pin = reset_pin_api(pin, username, request.POST.get('username_op'))
             if status_code_reset == StatusCode.OK.value:
-                status_code_disable = disable_operator_api(pin, request.session.get('username'),
-                                                           request.POST.get('username_op'))
+                status_code_disable = disable_operator_api(pin, username, request.POST.get('username_op'))
                 if status_code_disable == StatusCode.OK.value:
                     request.session['pin'] = tmp_pin
                     operator.signStatus = False
                     operator.save()
                     params_t = signing.loads(t)
                     params_t['operator'] = request.POST.get('username_op')
+                    params_t['change_pin'] = True
                     t = signing.dumps(params_t)
+                    result = send_recovery_link(request.POST.get('username_op'), PageRedirect.CHANGE_PIN.value)
+                    if result == StatusCode.OK.value:
+                        LOG.info("{} - Mail per cambio password inviata".format(username),
+                                 extra=agency.utils.utils.set_client_ip(request))
+                    elif result == StatusCode.NOT_FOUND.value:
+                        LOG.warning("{} - Utente non trovato".format(username),
+                                    extra=agency.utils.utils.set_client_ip(request))
+                    elif result == StatusCode.ERROR.value:
+                        LOG.warning("{} - Utente disabilitato".format(username),
+                                    extra=agency.utils.utils.set_client_ip(request))
+                    else:
+                        LOG.error("{} - Errore durante il recupero password utente".format(username),
+                                  extra=agency.utils.utils.set_client_ip(request))
     except Exception as e:
         LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
 
@@ -171,40 +188,45 @@ def get_idr_filter_operator(operator):
     return IdentityRequest.objects.all().order_by('-timestamp_identification').filter(idOperator=operator)
 
 
-def send_recovery_link(username):
+def send_recovery_link(username, page):
     """
     Invia una mail per il recupero password
+    :param page:
     :param username: cf/username dell'operatore
     :return: StatusCode
     """
     try:
         operator = get_operator_by_username(username)
         if operator:
-            if operator.status:
-                params = {
-                    'username': operator.fiscalNumber,
-                    'name': operator.name,
-                    'familyName': operator.surname,
-                    'email': operator.email,
-                }
-                rao = get_attributes_RAO()
-                t = signing.dumps(params)
+            params = {
+                'username': operator.fiscalNumber,
+                'name': operator.name,
+                'familyName': operator.surname,
+                'email': operator.email,
+            }
+            rao = get_attributes_RAO()
 
-                mail_elements = {
-                    'base_url': BASE_URL,
-                    'nameUser': operator.name,
-                    'familyNameUser': operator.surname,
-                    'rao_name': rao.name
-                }
-                create_verify_mail_token(operator.email, t)
+            mail_elements = {
+                'base_url': BASE_URL,
+                'nameUser': operator.name,
+                'familyNameUser': operator.surname,
+                'rao_name': rao.name,
+                'to_change': 'password'
+            }
+            mail_title = "Recupero password R.A.O."
+            if page == PageRedirect.CHANGE_PIN.value:
+                params['change_pin'] = True
+                mail_elements['to_change'] = 'PIN'
+                mail_title = "Recupero PIN R.A.O."
+            t = signing.dumps(params)
+            create_verify_mail_token(operator.email, t)
 
-                send_email([operator.email], "Recupero password R.A.O.",
-                           settings.TEMPLATE_URL_MAIL + 'mail_recovery_password.html',
-                           {'activation_link': settings.BASE_URL + str(reverse('agency:redirect', kwargs={'t': t}))[1:],
-                            'mail_elements': mail_elements})
-                return StatusCode.OK.value
-            else:
-                return StatusCode.ERROR.value
+            email_status_code = send_email([operator.email], mail_title,
+                                           settings.TEMPLATE_URL_MAIL + 'mail_recovery.html',
+                                           {'activation_link': settings.BASE_URL + str(reverse('agency:redirect',
+                                                                                               kwargs={'t': t}))[1:],
+                                            'mail_elements': mail_elements})
+            return email_status_code
         return StatusCode.NOT_FOUND.value
     except Exception as e:
         LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
@@ -264,7 +286,7 @@ def update_password_operator(username, new_password, status=True, request=None):
         operator = Operator.objects.filter(fiscalNumber=username).last()
         if operator:
             check_password = utils.check_password(username, new_password, status, request)
-            if check_password != StatusCode.ERROR.value and check_password != StatusCode.SIGN_NOT_AVAIBLE.value:
+            if check_password != StatusCode.ERROR.value and check_password != StatusCode.SIGN_NOT_AVAILABLE.value:
                 return StatusCode.LAST_PWD.value
             password = hashlib.sha256(new_password.encode()).hexdigest()
             hash_pass_insert = jwt.encode(
@@ -292,29 +314,32 @@ def create_operator(admin_username, operator):
     """
     name = agency.utils.utils.fix_name_surname(operator.get('name'))
     surname = agency.utils.utils.fix_name_surname(operator.get('familyName'))
-
+    fiscalNumber_op = re.sub(r"[\n\t\s]*", "", operator.get('fiscalNumber').upper())
     try:
         password = hashlib.sha256('password'.encode()).hexdigest()
-        hash_pass_insert = jwt.encode({'username': operator.get('fiscalNumber').upper(), 'exp': datetime.datetime.utcnow()}, password,
+        hash_pass_insert = jwt.encode({'username': fiscalNumber_op,
+                                       'exp': datetime.datetime.utcnow()},
+                                      password,
                                       algorithm='HS256')
 
         new_operator = Operator.objects.create(name=name,
                                                surname=surname,
-                                               fiscalNumber=operator.get('fiscalNumber').upper(),
-                                               email=operator.get('email'),
+                                               fiscalNumber=fiscalNumber_op,
+                                               email=re.sub(r"[\n\t\s]*", "", operator.get('email')),
                                                idRole=Role.objects.get(role=RoleTag.OPERATOR.value),
                                                password=hash_pass_insert.decode("UTF-8"),
-                                               status=False)
+                                               status=False,
+                                               isActivated=False)
 
     except Exception as e:
-        LOG.warning("admin: {}, operator: {} - Codice fiscale/email operatore gà presente".format(admin_username,
-                                                                                                  operator.get('fiscalNumber').upper()),
+        LOG.warning("admin: {}, operator: {} - Codice fiscale/email operatore gà presente".format(admin_username,fiscalNumber_op
+                                                                                                  ),
                     extra=agency.utils.utils.set_client_ip())
         return StatusCode.ERROR.value, None
 
     try:
         status_code, op_temporary_pin = create_api(operator.get('pinField'), admin_username,
-                                                  operator.get('fiscalNumber').upper())
+                                                  fiscalNumber_op)
         if status_code != StatusCode.OK.value:
             new_operator.delete()
             return StatusCode.EXC.value, None
@@ -477,7 +502,6 @@ def get_identification_report(days=4, week=0):
     :return: lista di dizionari con numero identificazioni e il relativo giorno di quella settimana
     """
     try:
-        locale.setlocale(locale.LC_ALL, "it_IT.UTF-8")
         datatime_now = datetime.datetime.utcnow()
         not_working_days = 0
         report = []
@@ -578,12 +602,23 @@ def check_db_not_altered():
 
 def update_sign_field_operator(username, status=True):
     """
-    Imposta il campo signStatus dell'operatore a True
+    Imposta il campo signStatus dell'operatore al valore di status
     :param username: username dell'operatore
     :param status: True/False da assegnare al signStatus
     """
     operator = get_operator_by_username(username)
     operator.signStatus = status
+    operator.save()
+
+
+def update_is_activated_field_operator(username, status=True):
+    """
+    Imposta il campo isActivated dell'operatore al valore di status
+    :param username: username dell'operatore
+    :param status: True/False da assegnare a isActivated
+    """
+    operator = get_operator_by_username(username)
+    operator.isActivated = status
     operator.save()
 
 
@@ -610,6 +645,7 @@ def resend_mail_activation(request, page, t):
                 if status_code_disable == StatusCode.OK.value:
                     request.session['pin'] = tmp_pin
                     operator.signStatus = False
+                    operator.isActivated = False
                     operator.save()
                     params_t = signing.loads(t)
                     params_t['operator'] = request.POST.get('username_op')
@@ -651,10 +687,31 @@ def resend_mail_activation(request, page, t):
                                                                                  request.POST.get('username_op')),
                                     extra=agency.utils.utils.set_client_ip(request))
 
+    except Exception as e:
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
+
+    return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'page': page, 't': t}))
 
 
-
-
+def send_mail_psw_operator(request, page, t):
+    """
+    Invia nuovamente la mail di attivazione
+    :param request:
+    :param page: pagina della lista degli operatori da mostrare
+    :param t: token
+    :return:
+    """
+    try:
+        username = request.POST.get('username_op')
+        result = send_recovery_link(username, PageRedirect.CHANGE_PSW.value)
+        if result == StatusCode.OK.value:
+            LOG.info("{} - Mail per cambio password inviata".format(username), extra=agency.utils.utils.set_client_ip(request))
+        elif result == StatusCode.NOT_FOUND.value:
+            LOG.warning("{} - Utente non trovato".format(username), extra=agency.utils.utils.set_client_ip(request))
+        elif result == StatusCode.ERROR.value:
+            LOG.warning("{} - Utente disabilitato".format(username), extra=agency.utils.utils.set_client_ip(request))
+        else:
+            LOG.error("{} - Errore durante il recupero password utente".format(username), extra=agency.utils.utils.set_client_ip(request))
 
     except Exception as e:
         LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
@@ -712,3 +769,40 @@ def update_emailrao(op, rao_name, rao_email, rao_host, rao_pwd, email_crypto_typ
         LOG.error('exception_value = %s, value = %s' % (value, type,), extra=agency.utils.utils.set_client_ip())
         LOG.error('tb = %s' % traceback.format_exception(type, value, tb), extra=agency.utils.utils.set_client_ip())
     return False
+
+def change_setup_value(request, t):
+    """
+    Modifica i dati riportati
+    :param request: request
+    :param t: token
+    :return: HttpResponseRedirect
+    """
+    try:
+        settings_rao = get_attributes_RAO()
+        operator = Operator.objects.filter(idRole_id='1').last()
+
+        if settings_rao and operator:
+            settings_rao.issuerCode = request.POST.get('issuerCode')
+            operator.fiscalNumber = request.POST.get('fiscalNumber')
+            settings_rao.save()
+            operator.save()
+            params_t = signing.loads(t)
+            params_t['username'] = request.POST.get('fiscalNumber')
+            params_t['alert_type'] = 'success'
+            params_t['alert_message'] = "Dati modificati correttamente. Inserisci tutti i campi riportati nella form sottostante per proseguire con l'attivazione."
+            t = signing.dumps(params_t)
+        else:
+            params_t = signing.loads(t)
+            params_t['alert_type'] = 'danger'
+            params_t['alert_message'] = "Non è stato possibile modificare i dati."
+            t = signing.dumps(params_t)
+            LOG.error("Codice Fiscale e/o Codice IPA non modificati. Dati su Rao non trovati.", extra=agency.utils.utils.set_client_ip(request))
+
+    except Exception as e:
+        LOG.error("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip(request))
+        params_t = signing.loads(t)
+        params_t['alert_type'] = 'danger'
+        params_t['alert_message'] = "Non è stato possibile modificare i dati."
+        t = signing.dumps(params_t)
+    return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
+

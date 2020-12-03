@@ -46,9 +46,10 @@
                         </h5>
                     </div>
                     <div class="modal-body">
-                        <p>Sei sicuro di voler resettare il PIN di firma per l'operatore? Questa azione comporta
-                            la disattivazione dell'operatore sul sistema di firma, fino a nuova configurazione.</p>
-                        <p class="pt-1">Inserisci il tuo pin del sistema di Firma per resettare il pin dell'operatore:</p>
+                        <p>Sei sicuro di voler resettare il PIN di Firma per l'operatore?</p>
+                        <p class="pt-1">Questa azione comporta La disattivazione dell'operatore sul Sistema di Firma.</p>
+                        <p class="pt-1">L'operatore riceverà una mail per reimpostare il PIN.</p>
+                        <p class="pt-1">Inserisci il tuo PIN del Sistema di Firma per resettare il pin dell'Operatore selezionato:</p>
                     </div>
                     <div class="modal-footer">
 
@@ -92,6 +93,40 @@
     </div>
 
     <div class="it-modal">
+        <div class="modal alert-modal" tabindex="-1" role="dialog" id="modale_change_pass">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <svg class="icon">
+                            <use xlink:href="{% static 'rao/agency/svg/sprite.svg' %}#it-info-circle"></use>
+                        </svg>
+                        <h5 class="modal-title">Richiesta di conferma
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+
+
+                        <p>L'operatore riceverà una mail per reimpostare la propria password. Sei sicuro di voler continuare? </p>
+                    </div>
+                    <div class="modal-footer">
+
+                        <form class="mx-auto" action="{% url 'agency:send_mail_psw_operator' 1 token %}" method="POST"
+                              id="form_change_pass_mail" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="username_op" id="username_op_for_change_pass" value="">
+                            <div class="pt-2">
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal" >Annulla
+                                </button>
+                                <button class="btn btn-primary btn-sm" type="submit" id="change_pass_btn" >Continua</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="it-modal">
         <div class="modal alert-modal" tabindex="-1" role="dialog" id="modale_resend_mail">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -105,7 +140,7 @@
                     <div class="modal-body">
                         <p>Sei sicuro di voler reinviare la mail di verifica all'operatore? Questa azione comporta
                             la generazione di un nuovo PIN temporaneo.</p>
-                        <p class="pt-1">Inserisci il tuo pin del sistema di Firma per resettare il pin dell'operatore:</p>
+                        <p class="pt-1">Inserisci il tuo pin del Sistema di Firma per resettare il pin dell'operatore:</p>
                     </div>
                     <div class="modal-footer">
 
@@ -147,7 +182,6 @@
             </div>
         </div>
     </div>
-
 
 
 
@@ -223,25 +257,30 @@
                     <td>
                         {% if operator.fiscalNumber != request.session.username %}
                         {% if operator.status %}
-                                <button class="btn btn-xs"
-                                        onclick="$('#modale_check_status').modal('show'); document.getElementById('username').value = '{{ operator.fiscalNumber }}';"
-                                        title="DISABILITA">
+                        <button class="btn btn-xs"
+                                onclick="$('#modale_check_status').modal('show'); document.getElementById('username').value = '{{ operator.fiscalNumber }}';"
+                                title="DISABILITA">
 
                             <span class="primary-color">Disabilita</span>
-                                </button>
-                                <button class="btn btn-xs"
-                                        onclick="$('#modale_reset_pin').modal('show'); document.getElementById('username_op').value = '{{ operator.fiscalNumber }}';"
-                                        title="Reset PIN">
+                        </button>
+                        <button class="btn btn-xs"
+                                onclick="$('#modale_reset_pin').modal('show'); document.getElementById('username_op').value = '{{ operator.fiscalNumber }}';"
+                                title="Reset PIN">
 
                             <span class="primary-color">Reset PIN</span>
-                                </button>
+                        </button>
 
-{% else %}
+                        {% else %}
 
                         <button class="btn btn-xs"
                                 onclick="$('#modale_resend_mail').modal('show'); document.getElementById('username_op_for_mail').value = '{{ operator.fiscalNumber }}';"
                                 title="Reinvia Mail">
                             <span class="primary-color">Reinvia Mail</span>
+                        </button>
+                        <button class="btn btn-xs"
+                                onclick="$('#modale_change_pass').modal('show'); document.getElementById('username_op_for_change_pass').value = '{{ operator.fiscalNumber }}';"
+                                title="Reinvia Mail">
+                            <span class="primary-color">Cambio password</span>
                         </button>
                         {% endif %}
                         {% endif %}

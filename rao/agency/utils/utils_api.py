@@ -36,6 +36,7 @@ def create_api(pin, admin_username, op_username):
         if dic['statusCode'] == 200:
             return StatusCode.OK.value, dic['message']
         elif dic['statusCode'] == -5:
+            agency.utils.utils_db.update_sign_field_operator(admin_username, False)
             LOG.warning("{} - PIN ADMIN bloccato".format(admin_username), extra=agency.utils.utils.set_client_ip())
         elif dic['statusCode'] == 401:
             LOG.warning("{} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username),
@@ -72,6 +73,7 @@ def reset_pin_api(pin, admin_username, op_username):
                      extra=agency.utils.utils.set_client_ip())
             return StatusCode.OK.value, dic['message']
         elif dic['statusCode'] == -5:
+            agency.utils.utils_db.update_sign_field_operator(admin_username, False)
             LOG.warning("{} - PIN ADMIN bloccato".format(admin_username), extra=agency.utils.utils.set_client_ip())
         elif dic['statusCode'] == 401:
             LOG.warning("admin: {}, {} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username,op_username),
@@ -108,6 +110,7 @@ def disable_operator_api(pin, admin_username, op_username):
                      extra=agency.utils.utils.set_client_ip())
             return StatusCode.OK.value
         elif dic['statusCode'] == -5:
+            agency.utils.utils_db.update_sign_field_operator(admin_username, False)
             LOG.warning("{} - PIN ADMIN bloccato".format(admin_username), extra=agency.utils.utils.set_client_ip())
         elif dic['statusCode'] == 401:
             LOG.warning("admin: {}, {} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username,op_username),
@@ -148,6 +151,7 @@ def activate_op_api(username, old_pin, new_pin, cert=None):
     if dic['statusCode'] == 200:
         return StatusCode.OK.value
     elif dic['statusCode'] == -5:
+        agency.utils.utils_db.update_sign_field_operator(username, False)
         LOG.warning("{} - PIN bloccato".format(username), extra=agency.utils.utils.set_client_ip())
     elif dic['statusCode'] == 401:
         LOG.warning(

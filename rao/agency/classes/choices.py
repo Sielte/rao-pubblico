@@ -90,9 +90,14 @@ class StatusCode(Enum):
     BAD_REQUEST = 400
     NOT_FOUND = 404
     LAST_PWD = -4
-    SIGN_NOT_AVAIBLE = -5
+    SIGN_NOT_AVAILABLE = -5
     UNAUTHORIZED = 401
+    FORBIDDEN = 403
 
+
+class PageRedirect(Enum):
+    CHANGE_PSW = 'change_password'
+    CHANGE_PIN = 'change_pin'
 
 class CertRef(Enum):
     RootCA = "https://eidas.agid.gov.it/certificati/AgID_eIDAS_Root_CA.cer"

@@ -247,7 +247,7 @@ def load_select(request):
     code = request.GET.get('code')
     try:
         if request.GET.get('select') == 'placeOfBirth':
-            if request.GET.get('birth_date'):
+            if request.GET.get('birth_date') and str(request.GET.get('is_form')) == 'false':
                 data = AddressMunicipality.objects.filter(city__code=code,
                                                           dateStart__lt=request.GET.get('birth_date'),
                                                           dateEnd__gt=request.GET.get('birth_date')).order_by('name')
@@ -322,7 +322,7 @@ def check_password(username, password, status, request=None):
     user = Operator.objects.filter(fiscalNumber=username.upper(), status=status).last()
     if user:
         if not user.signStatus:
-            return StatusCode.SIGN_NOT_AVAIBLE.value
+            return StatusCode.SIGN_NOT_AVAILABLE.value
         hash_pass = user.password
         try:
             jwt.decode(hash_pass, hash_pass_insert)
@@ -337,25 +337,29 @@ def check_password(username, password, status, request=None):
     return StatusCode.EXC.value
 
 
-def check_operator(username, password, status, request=None):
+def check_operator(username, password, request=None):
     """
     Verifica se l'operatore esiste, è attivo e se la pass è errata/scaduta
     :param request: request
     :param username: codiceFiscale/username dell'operatore
     :param password: password dell'operatore
-    :param status: status dell'operatore
     :return: StatusCode
     """
     hash_pass_insert = hashlib.sha256(password.encode()).hexdigest()
-    user = Operator.objects.filter(fiscalNumber=username.upper(), status=status).last()
+    user = Operator.objects.filter(fiscalNumber=username.upper()).last()
     if user:
-        if not user.signStatus:
-            return StatusCode.SIGN_NOT_AVAIBLE.value
+        if not user.status:
+            return StatusCode.UNAUTHORIZED.value
         hash_pass = user.password
         try:
             jwt.decode(hash_pass, hash_pass_insert)
             user.failureCounter = 0
             user.save()
+            if not user.signStatus and user.isActivated:
+                return StatusCode.FORBIDDEN.value
+            elif not user.signStatus and not user.isActivated:
+                return StatusCode.SIGN_NOT_AVAILABLE.value
+
             return StatusCode.OK.value
         except jwt.ExpiredSignatureError:
             return StatusCode.EXPIRED_TOKEN.value
@@ -364,16 +368,18 @@ def check_operator(username, password, status, request=None):
             user.failureTimestamp = datetime.datetime.utcnow()
             if user.failureCounter >= 3:
                 user.status = False
+                user.save()
                 LOG.warning("{} - Credenziali errate, Utente bloccato".format(username), extra=set_client_ip(request))
+                return StatusCode.UNAUTHORIZED.value
             else:
                 LOG.warning("{} - Credenziali errate".format(username), extra=set_client_ip(request))
             user.save()
-
             return StatusCode.ERROR.value
         except Exception as e:
             LOG.warning('[{}] eccezione durante la verifica della password: {}'.format(username, e),
                         extra=set_client_ip(request))
-    return StatusCode.ERROR.value
+            return StatusCode.EXC.value
+    return StatusCode.NOT_FOUND.value
 
 
 def is_admin(username):
@@ -389,14 +395,17 @@ def is_admin(username):
         return False
 
 
-def display_alert(alert_type, body_message):
+def display_alert(alert_type, body_message, link_message=None, link=None):
     """
     Genera un messaggio di errore/successo
     :param alert_type: enum AlertType: info, warning, success o danger
     :param body_message: testo del messaggio da mostrare
+    :param link_message:
+    :param link:
     :return: lista di dict con campi 'tags' e 'body'
     """
-    return [{'tags': alert_type.value, 'body': body_message}]
+
+    return [{'tags': alert_type.value, 'body': body_message, 'link_message': link_message, 'link': link}]
 
 
 def get_certificate(crt):
@@ -416,6 +425,31 @@ def get_certificate(crt):
     return
 
 
+def get_city_id(municipality_value, bith_date):
+    """
+    Riceve in input il codice catastale del comune di nascita e la data di nascita, dai quali risalire alla
+    città di nascita
+    :param municipality_value: codice catastale del comune di nascita
+    :param bith_date: data di nascita in formato YYYY-mm-dd
+    :return: StatusCode e sigla della città di nascita
+    """
+    try:
+        municipality = AddressMunicipality.objects.filter(code=municipality_value, dateStart__lt=bith_date,
+                                                          dateEnd__gt=bith_date).first()
+
+        if municipality is not None:
+            city = municipality.city
+            return StatusCode.OK.value, city.code
+
+        return StatusCode.ERROR.value, None
+
+    except Exception as e:
+        LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip())
+        return StatusCode.EXC.value, None
+
+
+
+
 def decode_fiscal_number(request):
     """
     Estrae i dati a partire dal codice fiscale
@@ -431,13 +465,25 @@ def decode_fiscal_number(request):
                 nation_code = 'Z000'
             else:
                 nation_code = decode_cf['birthplace']['code']
-            return JsonResponse({'statusCode': StatusCode.OK.value,
-                                 'codeOfNation': nation_code,
-                                 'placeOfBirth': decode_cf['birthplace']['code'],
-                                 'countyOfBirth': decode_cf['birthplace']['province'],
-                                 'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
-                                 'gender': decode_cf['sex']
-                                 })
+                return JsonResponse({'statusCode': StatusCode.OK.value,
+                                     'codeOfNation': nation_code,
+                                     'placeOfBirth': '',
+                                     'countyOfBirth': '',
+                                     'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
+                                     'gender': decode_cf['sex']
+                                     })
+
+            StatusCode_city, city = get_city_id(decode_cf['birthplace']['code'], decode_cf['birthdate'].strftime('%Y-%m-%d'))
+
+            if StatusCode_city == 200:
+
+                return JsonResponse({'statusCode': StatusCode.OK.value,
+                                     'codeOfNation': nation_code,
+                                     'placeOfBirth': decode_cf['birthplace']['code'],
+                                     'countyOfBirth': city,
+                                     'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
+                                     'gender': decode_cf['sex']
+                                     })
 
     except Exception as e:
         LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip(request))

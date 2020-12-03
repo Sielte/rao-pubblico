@@ -9,6 +9,7 @@ import json
 # Imports from your apps
 import logging
 from datetime import datetime
+import re
 
 import agency
 from agency.classes.foreign_country import ForeignCountry
@@ -22,18 +23,18 @@ class UserDetail:
     def __init__(self, identity, id_operator):
         self.id_operator = str(id_operator)
         self.name = agency.utils.utils.fix_name_surname(identity.get('name'))
-        self.email = identity.get('email')
+        self.email = re.sub(r"[\n\t\s]*", "", identity.get('email'))
         self.familyName = agency.utils.utils.fix_name_surname(identity.get('familyName'))
         self.identificationType = 'TS'
-        self.identificationSerialCode = identity.get('identificationSerialCode')
-        self.identificationExpirationDate = identity.get('identificationExpirationDate')
-        self.fiscalNumber = identity.get('fiscalNumber').upper()
+        self.identificationSerialCode = re.sub(r"[\n\t\s]*", "", identity.get('identificationSerialCode'))
+        self.identificationExpirationDate = re.sub(r"[\n\t\s]*", "", identity.get('identificationExpirationDate'))
+        self.fiscalNumber = re.sub(r"[\n\t\s]*", "", identity.get('fiscalNumber').upper())
 
         self.gender = identity.get('gender')
-        self.pec = identity.get('formPEC') if identity.get('formPEC') != '' else None
+        self.pec = re.sub(r"[\n\t\s]*", "", identity.get('formPEC')) if identity.get('formPEC') != '' else None
 
         self.countryCallingCode = identity.get('countryCallingCode')
-        self.phoneNumber = identity.get('phoneNumber')
+        self.phoneNumber = re.sub(r"[\n\t\s]*", "", identity.get('phoneNumber'))
 
         self.dateOfBirth = identity.get('dateOfBirth')
         self.nationOfBirth = AddressNation.objects.get(code=identity.get('nationOfBirth'))
@@ -48,7 +49,7 @@ class UserDetail:
         self.addressType = identity.get('addressType')
         self.addressName = identity.get('addressName')
         self.addressNumber = identity.get('addressNumber')
-        self.addressPostalCode = identity.get('addressPostalCode')
+        self.addressPostalCode = re.sub(r"[\n\t\s]*", "", identity.get('addressPostalCode'))
         self.addressNation = AddressNation.objects.get(code=identity.get('addressNation'))
         if self.addressNation.code == 'Z000':
             self.addressCountry = AddressCity.objects.get(code=identity.get('addressCountry'))
@@ -59,13 +60,13 @@ class UserDetail:
             self.addressMunicipality = ForeignCountry(self.addressNation.code)
 
         self.idCardType = identity.get('idCardType')
-        self.idCardDocNumber = identity.get('idCardDocNumber').replace(' ', '').upper()
+        self.idCardDocNumber = re.sub(r"[\n\t\s]*", "", identity.get('idCardDocNumber').upper())
         if identity.get('typeDocRelease') != "ministeroTrasporti":
             self.idCardIssuer = identity.get('typeDocRelease') + " " + identity.get('idCardIssuer')
         else:
             self.idCardIssuer = identity.get('typeDocRelease')
-        self.idCardIssueDate = identity.get('idCardIssueDate')
-        self.idCardExpirationDate = identity.get('idCardExpirationDate')
+        self.idCardIssueDate = re.sub(r"[\n\t\s]*", "", identity.get('idCardIssueDate'))
+        self.idCardExpirationDate = re.sub(r"[\n\t\s]*", "", identity.get('idCardExpirationDate'))
 
     def to_json(self):
         """
