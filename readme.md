@@ -24,7 +24,7 @@ Processo di building dell'immagine Docker:
 Dalla directory principale del progetto lanciare il comando:
 
 ```bash
-docker build --no-cache -f "./compose/local/django/Dockerfile" -t  "rao-app:<tag>" 
+docker build --no-cache -f "./compose/local/django/Dockerfile" -t  "rao-app:<tag>" .
 ```
 
 Sostituire a `<tag>` un'etichetta per identificativa dell'immagine Docker (esempio `latest`).
@@ -66,7 +66,7 @@ docker run -d \
        -e MAIL_LOG_LEVEL="ERROR" \
        -e AGENCY_LOG_LEVEL="INFO" \
        -e RAO_NAME="<nomeRAO>" \
-       --mount type=volume,source="<nome_volume",target="/data" \
+       --mount type=volume,source="<nome_volume>",target="/data" \
        -p "<porta>:8000" \
        "rao-app:latest"  "/start"
 ```
