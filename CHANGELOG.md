@@ -1,6 +1,13 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.4] - 11/01/2021
+
+### Fix
+
+- Refactoring di alcune funzioni;
+- Miglioramento dei controlli sul campo idCardIssuer.
+
 ## [1.0.3] - 03/12/2020
 
 ### Nuove funzionalità

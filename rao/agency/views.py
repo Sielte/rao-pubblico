@@ -23,7 +23,7 @@ from .forms import LoginForm, NewOperatorForm, NewIdentityForm, \
     NewIdentityPinForm, EmailSetupForm, CertSetupForm, ErrorSetupForm
 from .utils.mail_utils import send_email
 from .utils.utils import check_operator, display_alert, render_to_pdf, page_manager, is_admin, \
-    fix_name_surname, download_pdf, get_certificate, from_utc_to_local, set_client_ip
+    capitalize_text, download_pdf, get_certificate, from_utc_to_local, set_client_ip
 from .utils.utils_api import activate_op_api, update_cert
 from .utils.utils_db import get_all_operator, get_attributes_RAO, update_password_operator, \
     search_filter, create_operator, get_all_idr, create_identity, get_operator_by_username, \
@@ -907,8 +907,8 @@ def initial_setup(request):
 
                         messages = display_alert(AlertType.DANGER, "Email già inviata")
                     else:
-                        name = fix_name_surname(form.cleaned_data['nameField'])
-                        surname = fix_name_surname(form.cleaned_data['surnameField'])
+                        name = capitalize_text(form.cleaned_data['nameField'])
+                        surname = capitalize_text(form.cleaned_data['surnameField'])
                         email = form.cleaned_data['usernameField']
                         username = form.cleaned_data['fiscalNumberField'].upper()
                         issuer_code = re.sub(r"[\n\t\s]*", "", form.cleaned_data['issuerCodeField'])

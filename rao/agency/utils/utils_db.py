@@ -312,8 +312,8 @@ def create_operator(admin_username, operator):
     :param operator: request.POST contenente i dati del nuovo operatore
     :return: StatusCode, pin nuovo operatore (in caso di StatusCode = 200)
     """
-    name = agency.utils.utils.fix_name_surname(operator.get('name'))
-    surname = agency.utils.utils.fix_name_surname(operator.get('familyName'))
+    name = agency.utils.utils.capitalize_text(operator.get('name'))
+    surname = agency.utils.utils.capitalize_text(operator.get('familyName'))
     fiscalNumber_op = re.sub(r"[\n\t\s]*", "", operator.get('fiscalNumber').upper())
     try:
         password = hashlib.sha256('password'.encode()).hexdigest()

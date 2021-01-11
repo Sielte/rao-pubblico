@@ -180,14 +180,13 @@ def from_utc_to_local(utc_datetime):
     return local_date
 
 
-
-def fix_name_surname(name_or_surname):
+def capitalize_text(text):
     """
     Converte una stringa in miniscolo con le iniziali in maiuscolo
-    :param name_or_surname: stringa da convertire
+    :param text: stringa da convertire
     :return: stringa convertita
     """
-    array_string = name_or_surname.lower().split(' ')
+    array_string = text.lower().split(' ')
 
     for i, tmp_name in enumerate(array_string):
         array_string[i] = tmp_name.capitalize()

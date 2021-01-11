@@ -22,9 +22,9 @@ class UserDetail:
 
     def __init__(self, identity, id_operator):
         self.id_operator = str(id_operator)
-        self.name = agency.utils.utils.fix_name_surname(identity.get('name'))
+        self.name = agency.utils.utils.capitalize_text(identity.get('name'))
         self.email = re.sub(r"[\n\t\s]*", "", identity.get('email'))
-        self.familyName = agency.utils.utils.fix_name_surname(identity.get('familyName'))
+        self.familyName = agency.utils.utils.capitalize_text(identity.get('familyName'))
         self.identificationType = 'TS'
         self.identificationSerialCode = re.sub(r"[\n\t\s]*", "", identity.get('identificationSerialCode'))
         self.identificationExpirationDate = re.sub(r"[\n\t\s]*", "", identity.get('identificationExpirationDate'))
@@ -62,7 +62,7 @@ class UserDetail:
         self.idCardType = identity.get('idCardType')
         self.idCardDocNumber = re.sub(r"[\n\t\s]*", "", identity.get('idCardDocNumber').upper())
         if identity.get('typeDocRelease') != "ministeroTrasporti":
-            self.idCardIssuer = identity.get('typeDocRelease') + " " + identity.get('idCardIssuer')
+            self.idCardIssuer = identity.get('typeDocRelease') + " " + agency.utils.utils.capitalize_text(identity.get('idCardIssuer'))
         else:
             self.idCardIssuer = identity.get('typeDocRelease')
         self.idCardIssueDate = re.sub(r"[\n\t\s]*", "", identity.get('idCardIssueDate'))

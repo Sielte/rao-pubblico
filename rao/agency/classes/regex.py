@@ -19,7 +19,7 @@ regex_dim_pin = RegexValidator(regex=r'^\d{6}$', message="Il PIN inserito deve e
 
 regex_pin = r'^([0-9])\1{5}$|(^012345$|^123456$|^234567$|^345678$|^456789$|^567890$|^098765$|^987654$|^876543$|^765432$|^654321$|^543210$)'
 
-regex_id_card_issuer = r'^[A-ZÀ-Ù]{1}[a-zà-ù\'\-, ]{1,}$'
+regex_id_card_issuer = r'^[A-ZÀ-Ù]{1}[a-zà-ù\'\-, ]{1,}[A-zÀ-ù\'\-, ]{0,}$'
 
 regex_number = RegexValidator(regex=r'^[0-9]{6,}$', message="Il numero inserito non è valido.")
 

@@ -195,4 +195,4 @@ CRL_PATH = os.environ.get('CRL_PATH', 'data/')
 
 RAO_NAME = os.environ.get('RAO_NAME', '')
 
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
