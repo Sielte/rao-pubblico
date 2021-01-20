@@ -19,8 +19,9 @@ from .classes.choices import CARD_TYPE, ADDRESS_TYPE, CHOICE_SEX, ISSUER_TYPE, g
 from .classes.regex import regex_cap, regex_cie, regex_cf, regex_date, regex_email, regex_number, \
     regex_name, regex_password, regex_surname, regex_doc, regex_rao_name, regex_issuercode, \
     regex_pwd_email, regex_patente, regex_email_port, regex_pin, regex_dim_pin, regex_id_card_issuer
-from .utils.utils import check_ts, get_certificate, set_client_ip
+from .utils.utils import check_ts, get_certificate, set_client_ip, calculate_age
 from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain
+from .utils.utils_db import get_all_operator_cf
 
 LOG = logging.getLogger(__name__)
 
@@ -610,14 +611,24 @@ class NewIdentityForm(Form):
 
     def clean_fiscalNumber(self):
         fiscalNumber = self.cleaned_data.get('fiscalNumber').upper()
+        message = "Il codice fiscale inserito non è valido"
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
+            birth_date = codicefiscale.decode(fiscalNumber)['birthdate']
+            if isvalid and calculate_age(birth_date) < 18:
+                isvalid = False
+                message = "Il codice fiscale inserito deve appartenere ad un maggiorenne"
+
+            if isvalid and fiscalNumber in get_all_operator_cf():
+                isvalid = False
+                message = "Il codice fiscale inserito non deve appartenere ad un operatore/admin"
+
         except Exception as e:
             LOG.warning("Warning: {}".format(str(e)), extra=set_client_ip())
             isvalid = False
 
         if not isvalid:
-            raise ValidationError("Il codice fiscale inserito non è valido")
+            raise ValidationError(message)
         return
 
     def clean_confirmPhoneNumber(self):
@@ -893,14 +904,24 @@ class NewIdentityPinForm(Form):
 
     def clean_fiscalNumber(self):
         fiscalNumber = self.cleaned_data.get('fiscalNumber').upper()
+        message = "Il codice fiscale inserito non è valido"
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
+            birth_date = codicefiscale.decode(fiscalNumber)['birthdate']
+            if isvalid and calculate_age(birth_date) < 18:
+                isvalid = False
+                message = "Il codice fiscale inserito deve appartenere ad una persona maggiorenne"
+
+            if isvalid and fiscalNumber in get_all_operator_cf():
+                isvalid = False
+                message = "Il codice fiscale inserito non deve appartenere ad un operatore/admin"
+
         except Exception as e:
             LOG.warning("Warning: {}".format(str(e)), extra=set_client_ip())
             isvalid = False
 
         if not isvalid:
-            raise ValidationError("Il codice fiscale inserito non è valido")
+            raise ValidationError(message)
         return
 
     def clean_confirmPhoneNumber(self):

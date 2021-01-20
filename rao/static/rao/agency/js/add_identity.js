@@ -3,6 +3,9 @@ $(document).ready(function () {
             inputFormat: ["dd/MM/yyyy"],
             outputFormat: 'dd/MM/yyyy',
     });
+    $('.date_birth').datepicker('disable');
+    isDisabled = JSON.parse(script_tag.getAttribute("data_cf_verification"));
+    document.getElementById('identity_button').disabled = isDisabled;
 });
 
 input_CF = document.getElementById("fiscalNumber");
@@ -189,6 +192,12 @@ function toggle_disable_select(select, new_nation = false) {
     }
 
 }
+
+function toggle_id_button() {
+    document.getElementById('identity_button').disabled = !document.getElementById('identity_button').disabled;
+
+}
+
 
 function populate_select(first_select_id, select_tochange_id) {
     select = document.getElementById(first_select_id);

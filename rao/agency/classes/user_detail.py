@@ -37,7 +37,7 @@ class UserDetail:
         self.phoneNumber = re.sub(r"[\n\t\s]*", "", identity.get('phoneNumber'))
 
         self.dateOfBirth = identity.get('dateOfBirth')
-        self.nationOfBirth = AddressNation.objects.get(code=identity.get('nationOfBirth'))
+        self.nationOfBirth = AddressNation.objects.filter(code=identity.get('nationOfBirth')).first()
         if self.nationOfBirth.code == 'Z000':
             self.countyOfBirth = AddressCity.objects.get(code=identity.get('countyOfBirth'))
             self.placeOfBirth = AddressMunicipality.objects.filter(code=identity.get('placeOfBirth')) \

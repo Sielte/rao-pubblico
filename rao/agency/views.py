@@ -6,7 +6,7 @@ import logging
 
 # Core Django imports
 import re
-
+from codicefiscale import codicefiscale
 from django.conf import settings
 from django.core import signing
 from django.http import HttpResponseRedirect
@@ -23,7 +23,7 @@ from .forms import LoginForm, NewOperatorForm, NewIdentityForm, \
     NewIdentityPinForm, EmailSetupForm, CertSetupForm, ErrorSetupForm
 from .utils.mail_utils import send_email
 from .utils.utils import check_operator, display_alert, render_to_pdf, page_manager, is_admin, \
-    capitalize_text, download_pdf, get_certificate, from_utc_to_local, set_client_ip
+    capitalize_text, download_pdf, get_certificate, from_utc_to_local, set_client_ip, verify_cf
 from .utils.utils_api import activate_op_api, update_cert
 from .utils.utils_db import get_all_operator, get_attributes_RAO, update_password_operator, \
     search_filter, create_operator, get_all_idr, create_identity, get_operator_by_username, \
@@ -418,7 +418,12 @@ def add_identity(request, t):
                             'is_admin': is_admin(request.session['username']),
                         }
                         if 'identifica' not in request.POST:
+                            verify_cf_dic = verify_cf(request)
+
                             params['active_operator'] = active_operator
+
+                            params['verify_cf_dic'] = verify_cf_dic
+
                             return render(request, settings.TEMPLATE_URL_AGENCY + 'add_identity.html',
                                           {'params': params, 'token': t, 'form': form})
                         else:

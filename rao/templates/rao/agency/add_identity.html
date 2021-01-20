@@ -32,7 +32,24 @@
                                     <div id="accordion4" class="collapse show" role="tabpanel" aria-labelledby="headingA4">
                                         <div class="collapse-body">
 
+                                            {% if params.verify_cf_dic.status_code != 200 %}
+
                                             <div class="row">
+                                                <p class="font-weight-bold text-danger">
+                                                    Il codice fiscale non corrisponde ai dati inseriti, per favore controlla
+                                                    i dati evidenziati in rosso prima di procedere.
+                                                    <br>
+                                                    Ricorda al cittadino che, in caso di errore, un pacchetto di attivazione
+                                                    contenente dati errati non verr&agrave; accettato e sar&agrave; costretto a tornare allo
+                                                    sportello per una nuova identificazione.
+                                                    <br>
+                                                    Se intendi procedere ugualmente, puoi forzare la generazione del pacchetto di
+                                                    identificazione spuntando la casella in fondo a questa pagina.
+                                                </p>
+                                            </div>
+                                            {% endif %}
+
+                                            <div class="row pt-2">
                                                 <div class="col-lg-4">
                                                     <p>Codice fiscale:</p>
                                                     <p id="modalFiscalCode" class="font-weight-bold"> {{ params.user_detail.fiscalNumber }} </p>
@@ -40,19 +57,22 @@
 
                                                 <div class="col-lg-4">
                                                     <p>Nome:</p>
-                                                    <p id="modalName" class="font-weight-bold"> {{ params.user_detail.name }} </p>
+                                                    <p id="modalName" {% if params.verify_cf_dic.name %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}> {{ params.user_detail.name }} </p>
                                                 </div>
 
                                                 <div class="col-lg-4">
                                                     <p>Cognome:</p>
-                                                    <p id="modalSurname" class="font-weight-bold"> {{ params.user_detail.familyName }} </p>
+                                                    <p id="modalSurname" {% if params.verify_cf_dic.familyName %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}> {{ params.user_detail.familyName }} </p>
                                                 </div>
                                             </div>
 
                                             <div class="row pt-5">
                                                 <div class="col-lg-1">
                                                     <p>Sesso:</p>
-                                                    <p id="modalGender" class="font-weight-bold">{{ params.user_detail.gender}} </p>
+                                                    <p id="modalGender" {% if params.verify_cf_dic.gender %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}>{{ params.user_detail.gender}} </p>
                                                 </div>
                                                 <div class="col-lg-5">
                                                     <p>Codice della Tessera Sanitaria:</p>
@@ -68,20 +88,24 @@
                                             <div class="row pt-5">
                                                 <div class="col-lg-3">
                                                     <p>Data di nascita:</p>
-                                                    <p id="modalDateOfBirth" class="font-weight-bold">{{ params.user_detail.dateOfBirth }} </p>
+                                                    <p id="modalDateOfBirth" {% if params.verify_cf_dic.dateOfBirth %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}>{{ params.user_detail.dateOfBirth }} </p>
                                                 </div>
 
                                                 <div class="col-lg-3">
                                                     <p style="font-size: 14px;">Nazione di nascita:</p>
-                                                    <p id="modalNationOfBirth"  class="font-weight-bold"> {{ params.user_detail.nationOfBirth.name }}</p>
+                                                    <p id="modalNationOfBirth"  {% if params.verify_cf_dic.belfiore_code %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}> {{ params.user_detail.nationOfBirth.name }}</p>
                                                 </div>
                                                 <div class="col-lg-3">
                                                     <p style="font-size: 14px;">Provincia di nascita:</p>
-                                                    <p id="formProvince" class="font-weight-bold"> {{ params.user_detail.countyOfBirth.name }} </p>
+                                                    <p id="formProvince" {% if params.verify_cf_dic.belfiore_code %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}> {{ params.user_detail.countyOfBirth.name }} </p>
                                                 </div>
                                                 <div class="col-lg-3">
                                                     <p style="font-size: 14px;">Comune di nascita:</p>
-                                                    <p id="formPlace" class="font-weight-bold">{{ params.user_detail.placeOfBirth.name }}</p>
+                                                    <p id="formPlace" {% if params.verify_cf_dic.belfiore_code %} class="font-weight-bold" {% else %}
+                                                       class="font-weight-bold text-danger" {% endif %}>{{ params.user_detail.placeOfBirth.name }}</p>
 
                                                 </div>
                                             </div>
@@ -206,12 +230,21 @@
                                 </div>
                             </div>
 
+                            {% if params.verify_cf_dic.status_code != 200 %}
+                            <div class="d-flex justify-content-end">
+                                <div class="form-check form-check-group">
+                                    <input id="identity_checkbox" type="checkbox" onclick="toggle_id_button();"/>
+                                    <label for="identity_checkbox">Ho letto il messaggio informativo in alto ed intendo continuare</label>
+
+                                </div>
+                            </div>
 
 
+                            {% endif %}
 
                             <div class="modal-footer">
                                 <button class="btn btn-outline-primary btn-sm" type="button" data-dismiss="modal">Annulla</button>
-                                <input class="btn btn-primary btn-sm" type="submit" value="Identifica utente"
+                                <input id="identity_button"  class="btn btn-primary btn-sm" type="submit" value="Identifica utente"
                                        onclick="enable_autopopulate_fields()" name="identifica">
                             </div>
                         </div>
@@ -219,8 +252,6 @@
                 </div>
             </div>
             {% endif %}
-
-
 
             <div id="accordionDiv1" class="collapse-div" role="tablist">
                 <div class="collapse-header" id="headingA1">
@@ -313,7 +344,7 @@
                                 <div class="it-datepicker-wrapper">
                                     <div class="form-group">
                                         <label for="dateOfBirth"></label>
-                                        <input class="form-control it-date-datepicker" id="dateOfBirth" autocomplete="0"
+                                        <input class="form-control date_birth it-date-datepicker" id="dateOfBirth" autocomplete="0"
                                                name="dateOfBirth" type="text" placeholder="Data di nascita*"
                                                aria-describedby="dateOfBirthHelp" {% if form.dateOfBirth.value %}
                                                value="{{ form.dateOfBirth.value }}" {% endif %}>
@@ -655,7 +686,7 @@
 
             <div class="d-flex justify-content-center pt-5">
                 <button type="submit" style="width: 300px;" class="btn btn-primary" onclick="enable_autopopulate_fields()"
-                        title="Aggiungi">Aggiungi richiesta
+                        title="Aggiungi">Verifica Dati
                 </button>
             </div>
         </form>
@@ -663,18 +694,19 @@
 </main>
 {% endblock %}
 {% block bl_javascripts %}
-    <script id="script_tag" data_is_form={% if form.nationOfBirth.value %}true{% else %}false{% endif %}
-            data_modal_message={% if params.modal_message %}true{% else %}false{% endif %}
-            data_user_detail={% if params.user_detail %}true{% else %}false{% endif %}
-            {% if form.nationOfBirth.value %}
-                data_nationOfBirth_value = '{{ form.nationOfBirth.value }}'
-                data_countyOfBirth_value = '{{ form.countyOfBirth.value }}'
-                data_placeOfBirth_value = '{{ form.placeOfBirth.value }}'
-                data_addressNation_value = '{{ form.addressNation.value }}'
-                data_addressCountry_value = '{{ form.addressCountry.value }}'
-                data_addressMunicipality_value = '{{ form.addressMunicipality.value }}'
-            {% endif %}
-            src="{% static "rao/agency/js/add_identity.js" %}?20201029"></script>
+<script id="script_tag" data_is_form={% if form.nationOfBirth.value %}true{% else %}false{% endif %}
+        data_modal_message={% if params.modal_message %}true{% else %}false{% endif %}
+        data_user_detail={% if params.user_detail %}true{% else %}false{% endif %}
+        {% if form.nationOfBirth.value %}
+        data_nationOfBirth_value = '{{ form.nationOfBirth.value }}'
+        data_countyOfBirth_value = '{{ form.countyOfBirth.value }}'
+        data_placeOfBirth_value = '{{ form.placeOfBirth.value }}'
+        data_addressNation_value = '{{ form.addressNation.value }}'
+        data_addressCountry_value = '{{ form.addressCountry.value }}'
+        data_addressMunicipality_value = '{{ form.addressMunicipality.value }}'
+        data_cf_verification = {% if params.verify_cf_dic.status_code != 200 %}true{% else %}false{% endif %}
+        {% endif %}
+        src="{% static "rao/agency/js/add_identity.js" %}?20210118"></script>
 
 <script>
 function enable_autopopulate_fields() {

@@ -1,6 +1,22 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.5] - 20/01/2021
+
+### Modifiche
+
+- Nel caso in cui il codice fiscale non corrisponda ai dati anagrafici inseriti:
+	- La schermata di riepilogo presenta un testo informativo in rosso in cui viene avvisato l'operatore della non conformità dei dati;
+		- I dati che causano l'errore sono evidenziati in rosso;
+	- Qualora l'operatore voglia comunque proseguire, dovrà spuntare la casella in fondo alla pagina;
+	- Il pulsante di identificazione risulta disabilitato finchè la casella rimane non spuntata.
+
+### Fix
+
+- Inserimento delle nazioni soppresse visualizzate esclusivamente tra le nazioni di nascita;
+- Nuovi controlli sulla validità del codice fiscale del cittadino;
+
+
 ## [1.0.4] - 11/01/2021
 
 ### Fix

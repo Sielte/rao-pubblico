@@ -162,6 +162,14 @@ def get_all_operator():
     return Operator.objects.all()
 
 
+def get_all_operator_cf():
+    """
+    Recupera dal db tutti i cf degli operatori esistenti
+    :return: Operator[]
+    """
+    return Operator.objects.all().values_list('fiscalNumber', flat=True)
+
+
 def get_operator_by_username(username):
     """
     Get operatore da Username

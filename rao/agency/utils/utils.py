@@ -90,6 +90,72 @@ def format_crypto(crypto_mail, tag):
     return False
 
 
+def calculate_age(born):
+    """
+    Calcola gli anni a partire dalla data di nascita
+    :born: data di nascita
+    :return: Età
+    """
+    today = datetime.date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+
+def verify_cf(request):
+    """
+    Verifica che il codice fiscale sia conforme ai dati inseriti nel form, altrimenti mostra quali dati sono errati
+    :request: request contenente i dati del cittadino
+    :return: dic con True/False
+    """
+    try:
+        fiscal_code = request.POST.get('fiscalNumber').upper()
+        belfiore_code = request.POST.get('placeOfBirth') if request.POST.get('placeOfBirth') else request.POST.get(
+            'nationOfBirth')
+        verify_fiscal_code = {
+            'familyName': fiscal_code[0:3] == codicefiscale.encode_surname(request.POST.get('familyName')),
+            'name': fiscal_code[3:6] == codicefiscale.encode_surname(request.POST.get('name')),
+            'gender': codicefiscale.decode(fiscal_code)['sex'] == request.POST.get('gender'),
+            'dateOfBirth': codicefiscale.decode(fiscal_code)['birthdate'] == datetime.datetime.strptime(
+                request.POST.get('dateOfBirth'), '%d/%m/%Y'),
+            'belfiore_code': codicefiscale.decode(fiscal_code)['birthplace']['code'] == belfiore_code
+        }
+
+        if belfiore_code == 'Z998':
+            verify_fiscal_code['status_code'] = StatusCode.BAD_REQUEST.value
+            return verify_fiscal_code
+
+        calculated_cf = codicefiscale.encode(request.POST.get('familyName'),
+                                             request.POST.get('name'),
+                                             request.POST.get('gender'),
+                                             request.POST.get('dateOfBirth'),
+                                             belfiore_code
+                                             )
+
+        if fiscal_code == calculated_cf.upper():
+            verify_fiscal_code = {
+                'status_code': StatusCode.OK.value,
+                'familyName': True,
+                'name':  True,
+                'gender':  True,
+                'dateOfBirth':  True,
+                'belfiore_code':  True,
+            }
+        else:
+            verify_fiscal_code['status_code'] = StatusCode.ERROR.value
+
+
+    except Exception as e:
+        LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
+        verify_fiscal_code = {
+            'status_code': StatusCode.EXC.value,
+        }
+
+    return verify_fiscal_code
+
+
+
+
+
+
 def render_to_pdf(template_src, context_dict):
     """
     Genera un file pdf
