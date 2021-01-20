@@ -59,11 +59,9 @@ window.addEventListener('load', function () {
         },
         success: function (data) {
             document.getElementById("nationOfBirth").innerHTML = data;
-            document.getElementById("addressNation").innerHTML = data;
             if (is_form) {
 
                 $('#nationOfBirth').selectpicker('refresh');
-                $('#addressNation').selectpicker('refresh');
                 dateOfBirth_value = document.getElementById("dateOfBirth").value;
                 nationOfBirth_value = script_tag.getAttribute("data_nationOfBirth_value");
                 countyOfBirth_value = script_tag.getAttribute("data_countyOfBirth_value");
@@ -80,13 +78,41 @@ window.addEventListener('load', function () {
             else {
                 $('#nationOfBirth').selectpicker('destroy');
                 $('#nationOfBirth').selectpicker('render');
+            }
+
+        }
+    });
+    $.ajax({
+        url: url,
+        data: {
+            'code': "",
+            'select': 'addressNation'
+        },
+        success: function (data) {
+            document.getElementById("addressNation").innerHTML = data;
+            if (is_form) {
+
+                $('#addressNation').selectpicker('refresh');
+                dateOfBirth_value = document.getElementById("dateOfBirth").value;
+                nationOfBirth_value = script_tag.getAttribute("data_nationOfBirth_value");
+                countyOfBirth_value = script_tag.getAttribute("data_countyOfBirth_value");
+                placeOfBirth_value = script_tag.getAttribute("data_placeOfBirth_value");
+                addressNation_value = script_tag.getAttribute("data_addressNation_value");
+                addressCountry_value = script_tag.getAttribute("data_addressCountry_value");
+                addressMunicipality_value = script_tag.getAttribute("data_addressMunicipality_value");
+                set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', nationOfBirth_value,
+                 countyOfBirth_value, placeOfBirth_value, date_format_change(dateOfBirth_value), is_form);
+
+                set_birth_after_form('addressNation', 'addressCountry', 'addressMunicipality', addressNation_value,
+                 addressCountry_value, addressMunicipality_value, '', is_form);
+            }
+            else {
                 $('#addressNation').selectpicker('destroy');
                 $('#addressNation').selectpicker('render');
             }
 
         }
     });
-
 
 });
 

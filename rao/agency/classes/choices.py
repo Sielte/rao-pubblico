@@ -46,6 +46,14 @@ POLICY_OID = {
     '1.3.76.16.4.2.4'
 }
 
+SUPRESSED_COUNTRY = [
+    'Z157',
+    'Z118',
+    'Z105',
+    'Z135',
+    'Z111',
+    'Z250',
+]
 
 class CryptoTag(Enum):
     NESSUNA = 'NESSUNA'

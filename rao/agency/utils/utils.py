@@ -26,7 +26,7 @@ from jwcrypto import jwk, jwe
 from jwcrypto.common import json_encode
 from xhtml2pdf import pisa
 
-from agency.classes.choices import RoleTag, StatusCode
+from agency.classes.choices import RoleTag, StatusCode, SUPRESSED_COUNTRY
 from agency.models import Operator, AddressMunicipality, AddressCity, AddressNation, SetupTask
 from .utils_db import get_attributes_RAO, get_operator_by_username
 
@@ -265,6 +265,8 @@ def load_select(request):
             data = AddressCity.objects.all().order_by('name')
         elif request.GET.get('select') == 'nationOfBirth':
             data = AddressNation.objects.all().order_by('name')
+        elif request.GET.get('select') == 'addressNation':
+            data = AddressNation.objects.all().exclude(code__in=SUPRESSED_COUNTRY)
         else:
             data = None
 
