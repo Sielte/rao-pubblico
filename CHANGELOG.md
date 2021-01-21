@@ -1,6 +1,13 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.6] - 21/01/2021
+
+### Fix
+
+- Modifica alla variabile DATA_FILES_PATH nel file settings.py
+
+
 ## [1.0.5] - 20/01/2021
 
 ### Modifiche

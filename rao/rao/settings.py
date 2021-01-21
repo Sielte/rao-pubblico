@@ -179,7 +179,7 @@ TEMPLATE_URL_AGENCY = 'rao/agency/'
 TEMPLATE_URL_PDF = 'rao/pdf/'
 
 # Impostazioni cartella temporanea per token
-DATA_FILES_PATH = os.environ.get('DATA_FILES_PATH', 'data/')
+DATA_FILES_PATH = os.environ.get('DATA_FILES_PATH', '/rao/data/')
 SIZE_FILE = 24000000
 
 ENTRY_FOR_PAGE = 10
@@ -195,4 +195,4 @@ CRL_PATH = os.environ.get('CRL_PATH', 'data/')
 
 RAO_NAME = os.environ.get('RAO_NAME', '')
 
-APP_VERSION = "1.0.5"
+APP_VERSION = "1.0.6"
