@@ -45,7 +45,7 @@ regex_patente = RegexValidator(
     message="num. di documento non valido")
 
 regex_cie = RegexValidator(
-    regex=r'^[a-zA-Z]{2}[ ]?[\d]{5}[ ]?[a-zA-Z]{2}$',
+    regex=r'^([a-zA-Z]{2}[ ]?[\d]{5}[ ]?[a-zA-Z]{2}|[\d]{7}[ ]?[a-zA-Z]{2})$',
     message="num. di documento non valido")
 
 regex_rao_name = RegexValidator(

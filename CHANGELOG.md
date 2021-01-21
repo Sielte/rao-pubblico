@@ -1,6 +1,13 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.7] - 21/01/2021
+
+### Fix
+
+- Il controllo sul numero di documento verifica anche i casi di CIE 2.0.
+
+
 ## [1.0.6] - 21/01/2021
 
 ### Fix
