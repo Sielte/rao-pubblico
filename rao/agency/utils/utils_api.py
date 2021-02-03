@@ -41,7 +41,7 @@ def create_api(pin, admin_username, op_username):
         elif dic['statusCode'] == 401:
             LOG.warning("{} - Non autorizzato. Controlla i LOG sul Sistema di Firma".format(admin_username),
                         extra=agency.utils.utils.set_client_ip())
-        return StatusCode.ERROR.value, -1
+        return dic['statusCode'], -1
     except Exception as e:
         LOG.warning("Exception: {}".format(str(e)), extra=agency.utils.utils.set_client_ip())
         return StatusCode.EXC.value, -1

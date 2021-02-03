@@ -545,10 +545,8 @@
                             </div>
                             <div class="form-group col-lg-4">
                                 <div class="bootstrap-select-wrapper">
-                                    <select id="addressNation" name="addressNation" title="Nazione di domicilio*"
-                                            aria-describedby="addressNationHelp" data-live-search="true"
-                                            data-live-search-placeholder="Cerca la tua nazione">
-                                    </select>
+
+                                    {{ form.addressNation }}
                                     <small id="addressNationHelp"
                                            class="form-text text-danger">{{ form.addressNation.errors }} </small>
                                 </div>

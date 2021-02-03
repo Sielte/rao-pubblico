@@ -350,7 +350,7 @@ def create_operator(admin_username, operator):
                                                   fiscalNumber_op)
         if status_code != StatusCode.OK.value:
             new_operator.delete()
-            return StatusCode.EXC.value, None
+            return status_code, None
 
         params = {
             'username': new_operator.fiscalNumber,

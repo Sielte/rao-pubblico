@@ -5,7 +5,9 @@ $(document).ready(function () {
     });
     $('.date_birth').datepicker('disable');
     isDisabled = JSON.parse(script_tag.getAttribute("data_cf_verification"));
-    document.getElementById('identity_button').disabled = isDisabled;
+    if(document.getElementById('identity_button') != null) {
+        document.getElementById('identity_button').disabled = isDisabled;
+    }
 });
 
 input_CF = document.getElementById("fiscalNumber");
@@ -85,17 +87,23 @@ window.addEventListener('load', function () {
 
         }
     });
+    if(is_form) {
+        var code = script_tag.getAttribute("data_addressNation_value");
+    }
+    else {
+        var code = 'Z000';
+    }
     $.ajax({
         url: url,
         data: {
-            'code': "",
-            'select': 'addressNation'
+            'code': code,
+            'select': 'addressCountry'
         },
         success: function (data) {
-            document.getElementById("addressNation").innerHTML = data;
+            document.getElementById("addressCountry").innerHTML = data;
             if (is_form) {
-
                 $('#addressNation').selectpicker('refresh');
+                $('#addressCountry').selectpicker('refresh');
                 dateOfBirth_value = document.getElementById("dateOfBirth").value;
                 nationOfBirth_value = script_tag.getAttribute("data_nationOfBirth_value");
                 countyOfBirth_value = script_tag.getAttribute("data_countyOfBirth_value");
@@ -110,8 +118,8 @@ window.addEventListener('load', function () {
                  addressCountry_value, addressMunicipality_value, '', is_form);
             }
             else {
-                $('#addressNation').selectpicker('destroy');
-                $('#addressNation').selectpicker('render');
+                $('#addressCountry').selectpicker('destroy');
+                $('#addressCountry').selectpicker('render');
             }
 
         }

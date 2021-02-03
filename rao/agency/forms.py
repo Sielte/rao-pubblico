@@ -230,14 +230,15 @@ class ChangePinFileForm(Form):
             self.cert = None
             LOG.error("Chiave privata presente - Certificato non valido", extra=set_client_ip())
             raise ValidationError("Il certificato non deve contenere la chiave privata!")
-        if not check_expiration_certificate(self.cert) or not verify_policy_certificate(self.cert):
-            LOG.error("Policy del certificato non valide o certificato scaduto", extra=set_client_ip())
-            raise ValidationError("Il certificato selezionato non è valido!")
-        result = verify_certificate_chain(self.cert)
-        if result == StatusCode.ERROR.value:
-            raise ValidationError("Il certificato selezionato non è valido!")
-        if result == StatusCode.EXC.value or result == StatusCode.NOT_FOUND.value:
-            raise ValidationError("Impossibile verificare il certificato selezionato!")
+        if not check_expiration_certificate(self.cert):
+            LOG.error("Certificato scaduto", extra=set_client_ip())
+            raise ValidationError("Certificato scaduto")
+        if not verify_policy_certificate(self.cert):
+            LOG.error("Policy del certificato non valide", extra=set_client_ip())
+            raise ValidationError("Policy del certificato non valide")
+        result, message = verify_certificate_chain(self.cert)
+        if result != StatusCode.OK.value:
+            raise ValidationError(message)
         return
 
     def clean_uploadPrivateKey(self):
@@ -489,9 +490,11 @@ class NewIdentityForm(Form):
                              validators=[regex_email])
 
     countryCallingCode = ChoiceField(widget=Select(
-        attrs={'id': 'countryCallingCode', 'name': 'countryCallingCode', 'title': 'Prefisso*',
+        attrs={'id': 'countryCallingCode', 'name': 'countryCallingCode', 'title': 'Prefisso Internazionale*',
                'aria-describedby': "countryCallingCodeHelp", "data-live-search": "true",
-               "data-live-search-placeholder": "Seleziona il prefisso"}),
+               "data-live-search-placeholder": "Seleziona il prefisso",
+               }),
+        initial=get_choices_prefix()[0],
         choices=get_choices_prefix(),
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
@@ -531,7 +534,8 @@ class NewIdentityForm(Form):
 
     addressNation = ChoiceField(widget=Select(
         attrs={'id': 'addressNation', 'name': 'addressNation', 'title': 'Nazione Domicilio*',
-               'aria-describedby': "addressNationHelp"}),
+               'aria-describedby': "addressNationHelp", 'data-live-search': "true",
+               'data-live-search-placeholder': "Cerca la tua nazione"}),
         choices=get_choices_address_nation(),
         initial=0,
         required=True,
@@ -742,7 +746,7 @@ class NewIdentityPinForm(Form):
         attrs={'id': 'nationOfBirth', 'name': 'nationOfBirth', 'title': 'Nazione*',
                'aria-describedby': 'nationOfBirthHelp'}),
         choices=get_choices_address_nation(),
-        initial=0,
+        initial=get_choices_address_nation()[get_choices_address_nation().index(('Z000', 'Italia'))],
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
 
@@ -771,9 +775,11 @@ class NewIdentityPinForm(Form):
                              validators=[regex_email])
 
     countryCallingCode = ChoiceField(widget=Select(
-        attrs={'id': 'countryCallingCode', 'name': 'countryCallingCode', 'title': 'Prefisso*',
+        attrs={'id': 'countryCallingCode', 'name': 'countryCallingCode', 'title': 'Prefisso Internazionale*',
                'aria-describedby': "countryCallingCodeHelp", "data-live-search": "true",
-               "data-live-search-placeholder": "Seleziona il prefisso"}),
+               "data-live-search-placeholder": "Seleziona il prefisso",
+               }),
+        initial='+39',
         choices=get_choices_prefix(),
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
@@ -813,9 +819,10 @@ class NewIdentityPinForm(Form):
 
     addressNation = ChoiceField(widget=Select(
         attrs={'id': 'addressNation', 'name': 'addressNation', 'title': 'Nazione Domicilio*',
-               'aria-describedby': "addressNationHelp"}),
+               'aria-describedby': "addressNationHelp", 'data-live-search': "true",
+               'data-live-search-placeholder': "Cerca la tua nazione"}),
         choices=get_choices_address_nation(),
-        initial=0,
+        initial=('Z000', 'Italia'),
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
 
@@ -1031,14 +1038,15 @@ class CertSetupForm(Form):
             self.cert = None
             LOG.error("Chiave privata presente - Certificato non valido", extra=set_client_ip())
             raise ValidationError("Il certificato non deve contenere la chiave privata!")
-        if not check_expiration_certificate(self.cert) or not verify_policy_certificate(self.cert):
-            LOG.error("Policy del certificato non valide o certificato scaduto", extra=set_client_ip())
-            raise ValidationError("Il certificato selezionato non è valido!")
-        result = verify_certificate_chain(self.cert)
-        if result == StatusCode.ERROR.value:
-            raise ValidationError("Il certificato selezionato non è valido!")
-        if result == StatusCode.EXC.value or result == StatusCode.NOT_FOUND.value:
-            raise ValidationError("Impossibile verificare il certificato selezionato!")
+        if not check_expiration_certificate(self.cert):
+            LOG.error("Certificato scaduto", extra=set_client_ip())
+            raise ValidationError("Certificato scaduto")
+        if not verify_policy_certificate(self.cert):
+            LOG.error("Policy del certificato non valide", extra=set_client_ip())
+            raise ValidationError("Policy del certificato non valide")
+        result, message = verify_certificate_chain(self.cert)
+        if result != StatusCode.OK.value:
+            raise ValidationError(message)
         return
 
     def clean_uploadPrivateKey(self):

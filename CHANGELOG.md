@@ -1,6 +1,23 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.8] - 03/02/2021
+
+### Fix
+
+- Rimosso il messaggio "ritrasmetti" al termine del caricamento dei dati che appariva su alcuni browser;
+- Miglioramento grafico alla barra di caricamento che appare durante il processo di setup.
+- Miglioramento messaggi di errore all'interno della pagina di creazione operatore:
+    - I messaggi mostrati a schermo indicano più precisamente il problema;
+    - La finestra di inserimento PIN si chiude in caso di errore.
+     
+### Modifiche
+
+- I campi del modulo per la nuova richiesta di identificazione presentano tutti un'etichetta per evidenziare il tipo di dato da inserire;
+- Prefisso internazione pre-popolato con '+39';
+- Nazione di domicilio pre-popolato con 'Italia';
+
+
 ## [1.0.7] - 21/01/2021
 
 ### Fix

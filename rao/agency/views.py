@@ -31,7 +31,7 @@ from .utils.utils_db import get_all_operator, get_attributes_RAO, update_passwor
     create_verify_mail_token, set_is_verified, get_idr_filter_operator, get_status_operator, \
     delete_identity_request, update_sign_field_operator, update_status_operator, update_emailrao, \
     update_is_activated_field_operator
-from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check, init_user
+from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check
 from .utils.utils_token import signed_token, create_token_file, delete_token_file
 
 LOG = logging.getLogger(__name__)
@@ -258,14 +258,15 @@ def add_operator(request, t):
                 form = NewOperatorPinForm(request.POST)
 
             if form.is_valid():
-                params['operator'] = re.sub(r"[\n\t\s]*", "", request.POST.get('fiscalNumber').upper())
 
                 if 'add_operator' not in request.POST:
+                    params['operator'] = True
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'add_operator.html',
                                   {'params': params, 'token': t, 'form': form})
                 elif admin and not admin.signStatus:
                     return HttpResponseRedirect(reverse('agency:logout_agency'))
                 else:
+                    params['operator'] = False
                     result, pin = create_operator(request.session['username'], request.POST)
                     if result == StatusCode.OK.value:
                         params = {
@@ -282,12 +283,16 @@ def add_operator(request, t):
                         return HttpResponseRedirect(reverse('agency:list_operator', kwargs={'t': t, 'page': 1}))
                     elif result == StatusCode.ERROR.value:
                         messages = display_alert(AlertType.DANGER,
-                                                 "Si è verificato un problema durante l'inserimento del nuovo operatore."
-                                                 " Controlla che non esista un operatore con gli stessi dati!")
+                                       "Si è verificato un problema durante l'inserimento del nuovo operatore."
+                                       " Esiste già un operatore con questa email e/o codice fiscale.")
+                    elif result == StatusCode.SIGN_NOT_AVAILABLE.value:
+                        messages = display_alert(AlertType.DANGER, "Pin errato per la terza volta. Il tuo PIN non è più valido.")
+                    elif result == StatusCode.UNAUTHORIZED.value:
+                        messages = display_alert(AlertType.DANGER, "Il PIN inserito è errato.")
                     else:
                         messages = display_alert(AlertType.DANGER,
                                                  "Si è verificato un problema durante l'inserimento del nuovo operatore."
-                                                 " Invio della mail non riuscito!")
+                                                 " Invio della mail non riuscito.")
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'add_operator.html',
                       {'params': params, 'token': t, 'form': form, 'messages': messages})
@@ -754,10 +759,17 @@ def change_password(request, t):
         username = params_t['username']
         messages = []
         form = ChangePasswordForm()
+
+        if get_status_operator(username) and 'psw_expired' not in params_t:
+            update_status_operator(username, True)
+            LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
+            return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
+
         params = {
             'rao': get_attributes_RAO(),
             'first_pass': get_status_operator(username)
         }
+
         if request.method == 'POST':
             form = ChangePasswordForm(request.POST)
             password = request.POST.get('passwordField')
@@ -775,11 +787,6 @@ def change_password(request, t):
                         'rao': get_attributes_RAO(),
                         'init_setup': True,
                     }
-                    if necessary_data_check():
-                        init_user(request)
-                        update_status_operator(username, True)
-                        LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
-                        return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))
                     return render(request, settings.TEMPLATE_URL_AGENCY + 'change_password.html',
                                   {'params': params, 'messages': messages, 'token': t})
                 elif 'is_admin' not in params_t:
@@ -810,7 +817,6 @@ def change_password(request, t):
                 LOG.warning("{} - Password non valida.".format(username), extra=set_client_ip(request))
                 error = "Si è verificato un problema con l'aggiornamento della password, riprova."
                 messages = display_alert(AlertType.DANGER, error)
-
 
         return render(request, settings.TEMPLATE_URL_AGENCY + 'change_password.html',
                       {'form': form, 'params': params, 'messages': messages, 'token': t})
@@ -972,9 +978,10 @@ def initial_setup(request):
                             LOG.error("Exception: {}".format(str(e)), extra=set_client_ip(request))
                             messages = display_alert(AlertType.DANGER,
                                                      "Si è verificato un errore durante l'invio della mail di verifica,"
-                                                     " controlla che la configurazione SMTP sia corretta.")
+                                                    " controlla che la configurazione SMTP sia corretta.")
                 else:
-                    LOG.warning("Errore nella compilazione del form",extra=set_client_ip(request))
+                    messages = display_alert(AlertType.DANGER, "Campi del form vuoti o non validi.")
+                    LOG.warning("Errore nella compilazione del form", extra=set_client_ip(request))
             return render(request, settings.TEMPLATE_URL_AGENCY + 'init_setup.html',
                           {'form': form, 'messages': messages})
         else:

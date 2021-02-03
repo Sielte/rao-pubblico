@@ -66,11 +66,12 @@ def verify_certificate_chain(cert_string):
     :return: StatusCode
     """
     try:
+        status, message = StatusCode.OK.value, "Certificato verificato"
         certificate = crypto.load_certificate(crypto.FILETYPE_PEM, cert_string.encode())
         cert_x509 = x509.load_pem_x509_certificate(cert_string.encode(), default_backend())
     except Exception as e:
         LOG.warning(str(e), extra=set_client_ip())
-        return StatusCode.ERROR.value
+        return StatusCode.ERROR.value, "Il certificato selezionato non è valido"
 
     try:
         store = crypto.X509Store()
@@ -92,18 +93,17 @@ def verify_certificate_chain(cert_string):
                 ExtensionOID.CRL_DISTRIBUTION_POINTS).value
         except x509.extensions.ExtensionNotFound:
             LOG.warning(cert_string)
-            return StatusCode.NOT_FOUND.value
+            return StatusCode.NOT_FOUND.value, "Chiave dell'IA non trovata"
 
         crl_uri = get_crl_endpoint(certificate_policies)
-
         if crl_uri is None:
             LOG.warning('Impossibile stabilire endpoint per CRL con aki = {}'.format(aki), extra=set_client_ip())
-            return StatusCode.NOT_FOUND.value
+            return StatusCode.NOT_FOUND.value, "Impossibile stabilire l'endpoint per CRL con aki = {}".format(aki)
 
         crl_latest = make_crl_store_path(crl_uri, aki) + ".crl"
 
         if not exists_crl(crl_uri, aki):
-            download_crl(crl_uri, aki)
+            status, message = download_crl(crl_uri, aki)
 
         with open(crl_latest) as f:
             crl_content = f.read()
@@ -112,7 +112,7 @@ def verify_certificate_chain(cert_string):
         crl_crypto = crypto.CRL.from_cryptography(crl)
 
         if crl.next_update < datetime.datetime.now():
-            download_crl(crl_uri, aki)
+            status, message = download_crl(crl_uri, aki)
             crl = x509.load_pem_x509_crl(crl_content.encode(), default_backend())
             crl_crypto = crypto.CRL.from_cryptography(crl)
 
@@ -121,13 +121,13 @@ def verify_certificate_chain(cert_string):
         store_ctx = crypto.X509StoreContext(store, certificate)
 
         store_ctx.verify_certificate()
-        return StatusCode.OK.value
+        return status, message
     except Exception as e:
         type, value, tb = sys.exc_info()
         LOG.error(e, extra=set_client_ip())
         LOG.error('exception_value = {0}, value = {1}'.format(str(value), str(type)), extra=set_client_ip())
         LOG.error('tb = {}'.format(traceback.format_exception(type, value, tb)), extra=set_client_ip())
-        return StatusCode.EXC.value
+        return StatusCode.EXC.value, "Errore durante la verifica del certificato"
 
 
 def encode_crl_endpoint(value):
@@ -217,12 +217,18 @@ def _download_http_crl(endpoint, key_identifier):
                 f.write(crypto.dump_crl(crypto.FILETYPE_PEM, crl).decode())
             with open(crl_meta_dest, 'w') as f:
                 f.write(endpoint)
+            status = StatusCode.OK.value
+            message = "Status ok"
         else:
             LOG.error('Errore durante il download della CRL con endpoint = {}'.format(endpoint), extra=set_client_ip())
+            status = StatusCode.ERROR.value
+            message = "Errore durante il download della CRL con endpoint = {}".format(endpoint)
     except Exception as e:
         LOG.error('Eccezione durante il download della CRL con key_identifier = {}'.format(key_identifier), extra=set_client_ip())
+        message = "Errore durante il download della CRL"
+        status = StatusCode.EXC.value
         LOG.error("Exception: {}".format(str(e)), extra=set_client_ip())
-
+    return status, message
 
 def download_crl(endpoint, key_identifier):
     """
@@ -232,11 +238,14 @@ def download_crl(endpoint, key_identifier):
     :return:
     """
     if endpoint.startswith(u'http'):
-        _download_http_crl(endpoint, key_identifier)
+        status, message = _download_http_crl(endpoint, key_identifier)
     elif endpoint.startswith(u'ttp'):
         endpoint = 'h' + endpoint
-        _download_http_crl(endpoint, key_identifier)
-
+        status, message = _download_http_crl(endpoint, key_identifier)
+    else:
+        status = StatusCode.NOT_FOUND.value
+        message = "Controllo sull'endpoint non riuscito"
+    return status, message
 
 def download_http_cert(endpoint):
     """
