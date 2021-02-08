@@ -31,7 +31,7 @@ from .utils.utils_db import get_all_operator, get_attributes_RAO, update_passwor
     create_verify_mail_token, set_is_verified, get_idr_filter_operator, get_status_operator, \
     delete_identity_request, update_sign_field_operator, update_status_operator, update_emailrao, \
     update_is_activated_field_operator
-from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check
+from .utils.utils_setup import configuration_check, init_settings_rao, necessary_data_check, init_user
 from .utils.utils_token import signed_token, create_token_file, delete_token_file
 
 LOG = logging.getLogger(__name__)
@@ -782,6 +782,8 @@ def change_password(request, t):
                     request.session['emailField'] = params_t['email']
                     request.session['activation_token'] = t
                     request.session['initial_setup'] = True
+                    init_user(request)
+                    update_status_operator(username, True)
 
                     params = {
                         'rao': get_attributes_RAO(),

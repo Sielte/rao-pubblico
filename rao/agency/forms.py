@@ -494,7 +494,7 @@ class NewIdentityForm(Form):
                'aria-describedby': "countryCallingCodeHelp", "data-live-search": "true",
                "data-live-search-placeholder": "Seleziona il prefisso",
                }),
-        initial=get_choices_prefix()[0],
+        initial='+39',
         choices=get_choices_prefix(),
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
@@ -537,7 +537,7 @@ class NewIdentityForm(Form):
                'aria-describedby': "addressNationHelp", 'data-live-search': "true",
                'data-live-search-placeholder': "Cerca la tua nazione"}),
         choices=get_choices_address_nation(),
-        initial=0,
+        initial=('Z000', 'Italia'),
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
 
@@ -746,7 +746,7 @@ class NewIdentityPinForm(Form):
         attrs={'id': 'nationOfBirth', 'name': 'nationOfBirth', 'title': 'Nazione*',
                'aria-describedby': 'nationOfBirthHelp'}),
         choices=get_choices_address_nation(),
-        initial=get_choices_address_nation()[get_choices_address_nation().index(('Z000', 'Italia'))],
+        initial=0,
         required=True,
         error_messages={'required': 'Campo obbligatorio!'})
 

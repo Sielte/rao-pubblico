@@ -1,6 +1,17 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.9] - 08/02/2021
+
+### Fix
+
+- Correzioni relative alla versione 1.0.8.
+
+### Modifiche
+
+- Inserimento migrations 0002.
+
+
 ## [1.0.8] - 03/02/2021
 
 ### Fix
