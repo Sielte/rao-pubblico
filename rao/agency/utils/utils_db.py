@@ -226,6 +226,9 @@ def send_recovery_link(username, page):
                 params['change_pin'] = True
                 mail_elements['to_change'] = 'PIN'
                 mail_title = "Recupero PIN R.A.O."
+            else:
+                params['recovery'] = True
+
             t = signing.dumps(params)
             create_verify_mail_token(operator.email, t)
 

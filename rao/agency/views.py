@@ -760,7 +760,7 @@ def change_password(request, t):
         messages = []
         form = ChangePasswordForm()
 
-        if get_status_operator(username) and 'psw_expired' not in params_t:
+        if get_status_operator(username) and 'psw_expired' not in params_t and 'recovery' not in params_t:
             update_status_operator(username, True)
             LOG.info("{} - Cambio password avvenuto.".format(username), extra=set_client_ip(request))
             return HttpResponseRedirect(reverse('agency:change_pin', kwargs={'t': t}))

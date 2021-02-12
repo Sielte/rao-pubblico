@@ -1,6 +1,14 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+
+## [1.0.10] - 12/02/2021
+
+### Fix
+
+- Risolto problema relativo al link del cambio password
+
+
 ## [1.0.9] - 08/02/2021
 
 ### Fix
