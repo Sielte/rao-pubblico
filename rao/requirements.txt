@@ -1,4 +1,4 @@
-django==2.2.13
+django==2.2.23
 django-extensions==2.2.9
 reportlab==3.5.42
 python-codicefiscale==0.3.7

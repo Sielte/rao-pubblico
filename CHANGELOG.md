@@ -1,6 +1,12 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.11] - 20/05/2021
+
+### Modifiche
+
+- Aggiornamento versione di django (2.2.23).
+
 
 ## [1.0.10] - 12/02/2021
 
