@@ -1,6 +1,14 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.12] - 16/06/2021
+
+### Fix
+
+- Utilizzo del formato raw per impostare il luogo di nascita durante la decodifica del codice fiscale.
+- Modificato il numero minimo e massimo di cifre del codice postale.
+
+
 ## [1.0.11] - 20/05/2021
 
 ### Modifiche

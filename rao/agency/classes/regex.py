@@ -13,7 +13,7 @@ regex_surname = RegexValidator(regex=r"^[A-zÀ-ù'\-, ]{2,}$",
 regex_cf = RegexValidator(regex=r'^[a-zA-Z]{6}[0-9]{2}[a-zA-Z][0-9]{2}[a-zA-Z0-9]{5}$',
                           message="Codice fiscale non valido.")
 
-regex_cap = RegexValidator(regex=r'^[0-9]{5}$', message="CAP non valido.")
+regex_cap = RegexValidator(regex=r'^[0-9]{,10}$', message="CAP non valido.")
 
 regex_dim_pin = RegexValidator(regex=r'^\d{6}$', message="Il PIN inserito deve essere formato da 6 cifre numeriche.")
 

@@ -112,33 +112,19 @@ def verify_cf(request):
             'nationOfBirth')
         verify_fiscal_code = {
             'familyName': fiscal_code[0:3] == codicefiscale.encode_surname(request.POST.get('familyName')),
-            'name': fiscal_code[3:6] == codicefiscale.encode_surname(request.POST.get('name')),
+            'name': fiscal_code[3:6] == codicefiscale.encode_name(request.POST.get('name')),
             'gender': codicefiscale.decode(fiscal_code)['sex'] == request.POST.get('gender'),
             'dateOfBirth': codicefiscale.decode(fiscal_code)['birthdate'] == datetime.datetime.strptime(
                 request.POST.get('dateOfBirth'), '%d/%m/%Y'),
-            'belfiore_code': codicefiscale.decode(fiscal_code)['birthplace']['code'] == belfiore_code
+            'belfiore_code': codicefiscale.decode(fiscal_code)['raw']['birthplace'] == belfiore_code
         }
 
         if belfiore_code == 'Z998':
             verify_fiscal_code['status_code'] = StatusCode.BAD_REQUEST.value
             return verify_fiscal_code
 
-        calculated_cf = codicefiscale.encode(request.POST.get('familyName'),
-                                             request.POST.get('name'),
-                                             request.POST.get('gender'),
-                                             request.POST.get('dateOfBirth'),
-                                             belfiore_code
-                                             )
-
-        if fiscal_code == calculated_cf.upper():
-            verify_fiscal_code = {
-                'status_code': StatusCode.OK.value,
-                'familyName': True,
-                'name':  True,
-                'gender':  True,
-                'dateOfBirth':  True,
-                'belfiore_code':  True,
-            }
+        if all(value is True for value in verify_fiscal_code.values()):
+            verify_fiscal_code['status_code'] = StatusCode.OK.value
         else:
             verify_fiscal_code['status_code'] = StatusCode.ERROR.value
 
@@ -515,8 +501,6 @@ def get_city_id(municipality_value, bith_date):
         return StatusCode.EXC.value, None
 
 
-
-
 def decode_fiscal_number(request):
     """
     Estrae i dati a partire dal codice fiscale
@@ -527,11 +511,11 @@ def decode_fiscal_number(request):
         isvalid = codicefiscale.is_valid(cf) or codicefiscale.is_omocode(cf)
         decode_cf = codicefiscale.decode(cf)
         if isvalid:
-            am = AddressMunicipality.objects.filter(code__iexact=decode_cf['birthplace']['code']).first()
+            am = AddressMunicipality.objects.filter(code__iexact=decode_cf['raw']['birthplace']).first()
             if am:
                 nation_code = 'Z000'
             else:
-                nation_code = decode_cf['birthplace']['code']
+                nation_code = decode_cf['raw']['birthplace']
                 return JsonResponse({'statusCode': StatusCode.OK.value,
                                      'codeOfNation': nation_code,
                                      'placeOfBirth': '',
@@ -540,13 +524,13 @@ def decode_fiscal_number(request):
                                      'gender': decode_cf['sex']
                                      })
 
-            StatusCode_city, city = get_city_id(decode_cf['birthplace']['code'], decode_cf['birthdate'].strftime('%Y-%m-%d'))
+            status_code_city, city = get_city_id(decode_cf['raw']['birthplace'], decode_cf['birthdate'].strftime('%Y-%m-%d'))
 
-            if StatusCode_city == 200:
+            if status_code_city == StatusCode.OK.value:
 
                 return JsonResponse({'statusCode': StatusCode.OK.value,
                                      'codeOfNation': nation_code,
-                                     'placeOfBirth': decode_cf['birthplace']['code'],
+                                     'placeOfBirth': decode_cf['raw']['birthplace'],
                                      'countyOfBirth': city,
                                      'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
                                      'gender': decode_cf['sex']
