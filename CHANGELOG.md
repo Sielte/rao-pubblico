@@ -1,6 +1,12 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.13] - 01/07/2021
+
+### Fix
+
+- Modificato il template richiamato durante l'invio della mail di recupero.
+
 ## [1.0.12] - 16/06/2021
 
 ### Fix

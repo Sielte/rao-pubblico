@@ -233,7 +233,7 @@ def send_recovery_link(username, page):
             create_verify_mail_token(operator.email, t)
 
             email_status_code = send_email([operator.email], mail_title,
-                                           settings.TEMPLATE_URL_MAIL + 'mail_recovery.html',
+                                           settings.TEMPLATE_URL_MAIL + 'mail_recovery_password.html',
                                            {'activation_link': settings.BASE_URL + str(reverse('agency:redirect',
                                                                                                kwargs={'t': t}))[1:],
                                             'mail_elements': mail_elements})
