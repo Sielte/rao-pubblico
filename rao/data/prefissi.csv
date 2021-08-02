@@ -30,7 +30,7 @@ Bolivia;+591
 Bosnia-Erzegovina;+387
 Botswana;+267
 Brasile;+55
-Brunei;+673
+Brunei Darussalam;+673
 Bulgaria;+359
 Burkina Faso;+226
 Burundi;+257
@@ -38,18 +38,18 @@ Cambogia;+855
 Camerun;+237
 Canada;+1
 Capo Verde;+238
-Cayman;+1345
+Isole Cayman;+1345
 Ciad;+235
 Cile;+56
 Cina;+86
 Cipro;+357
 Colombia;+57
 Comore;+2697
-Congo;+242
+Repubblica Democratica del Congo;+242
 Corea del Nord;+850
 Corea del Sud;+82
 Costa d'Avorio;+225
-Costarica;+506
+Costa Rica;+506
 Croazia;+385
 Cuba;+53
 Danimarca;+45
@@ -63,7 +63,7 @@ Emsat;+97403
 Eritrea;+291
 Estonia;+372
 Etiopia;+251
-FaerOer;+298
+Isole Fær Øer;+298
 Falkland;+500
 Filippine;+63
 Finlandia;+358
@@ -86,8 +86,8 @@ Guadalupa;+590690
 Guam;+1671
 Guatemala;+502
 Guayana Francese;+594694
-Guinea Bissau;+245
-Guinea Equatoriale;+240
+Guinea-Bissau;+245
+Guinea equatoriale;+240
 Guyana;+592
 Haiti;+509
 Hawaii;+1
@@ -111,10 +111,11 @@ Islanda;+354
 Israele;+972
 Italia;+39
 Kampuchea (Cambogia);+855
-Kazakistan;+7
+Kazakhstan;+7
 Kenya;+254
 Kirghizistan;+996
 Kiribati;+686
+Kosovo;+383
 Kuwait;+965
 Laos;+856
 Lesotho;+266
@@ -126,7 +127,7 @@ Liechtenstein;+423
 Lituania;+370
 Lussemburgo;+352
 Macao;+853
-Macedonia;+389
+Macedonia del Nord;+389
 Madagascar;+261
 Malawi;+265
 Malaysia;+60
@@ -135,19 +136,19 @@ Mali;+223
 Malta;+356
 Marianne;+1670
 Marocco;+212
-Marshall;+692
+Isole Marshall;+692
 Martinica;+596696
 Mauritania;+222
-Mauritius;+230
+Maurizio;+230
 Mayotte;+2696
 Messico;+52
-Micronesia;+691
-Moldavia;+373
-Monaco Principato e Montecarlo;+377
+Stati Federati di Micronesia;+691
+Moldova;+373
+Monaco;+377
 Mongolia;+976
 Montserrat;+1664
 Mozambico;+258
-Myanmar (Birmania);+95
+Myanmar/Birmania;+95
 Namibia;+264
 Nauru;+674
 Nepal;+977
@@ -162,6 +163,7 @@ Oman;+968
 Paesi Bassi;+31
 Pakistan;+92
 Palau;+680
+Palestina;+970
 Panama;+507
 Papua Nuova Guinea;+675
 Paraguay;+595
@@ -172,27 +174,28 @@ Portogallo;+351
 Portorico;+1787
 Qatar;+974
 Regno Unito;+44
-Repubblica Ceca;+420
+Repubblica ceca;+420
 Repubblica Centrafricana;+236
 Repubblica Dominicana;+1809
 Repubblica Guinea;+224
-Repubblica di San Marino;+378
-Repubblica Slovacca;+421
+San Marino;+378
+Saint-Martin (FR);+590
+Slovacchia;+421
 Reunione;+262692
 Romania;+40
 Ruanda;+250
-Russia (Federazione Russa) *;+7
+Russia;+7
 Saint Elena;+290
 Saint Kittis e Nevis;+1869
 Saint Lucia;+1758
 Saint Pierre e Miquelon;+508
-Saint Vincent e Grenadines;+1784
-Salomone;+677
+Saint Vincent e Grenadine;+1784
+Isole Salomone;+677
 Samoa;+685
 Samoa Americane;+684
-Sao Tomè e Principe;+239
+Sao Tomé e Principe;+239
 Senegal;+221
-Serbia&Montenegro;+381
+Serbia;+381
 Seychelles;+248
 Sierra Leone;+232
 Singapore;+65
@@ -201,14 +204,14 @@ Slovenia;+386
 Somalia;+252
 Spagna;+34
 Sri Lanka;+94
-Sud Africa;+27
+Sudafrica;+27
 Sudan;+249
 Suriname;+597
 Svezia;+46
 Svizzera;+41
 Swaziland;+268
 Taiwan;+886
-Tajikistan;+992
+Tagikistan;+992
 Tanzania;+255
 Thailandia;+66
 Togo;+228
@@ -235,4 +238,4 @@ Wallis e Futuna;+681
 Yemen;+967
 Zaire;+243
 Zambia;+260
-Zimbawe;+263
+Zimbabwe;+263

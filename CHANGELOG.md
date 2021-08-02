@@ -1,6 +1,14 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.14] - 02/08/2021
+
+### Fix
+
+- Aggiornamento dei link www.agid.gov.it non più funzionanti su email e PDF.
+- Modifica ai file di nazioni e prefissi per aumentare il numero di prefissi disponibili all'interno del database.
+
+
 ## [1.0.13] - 01/07/2021
 
 ### Fix
