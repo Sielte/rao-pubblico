@@ -61,7 +61,7 @@ regex_host_email = RegexValidator(
     message="L'host inserito non è valido")
 
 regex_pwd_email = RegexValidator(
-    regex=r'^([0-9a-zA-Z*.#!@$%^&(){}[\]:;<>,.?\/~_|]).{3,50}$',
+    regex=r'^([0-9a-zA-Z*.#!@$%^&(){}[\]:;<>,.?\/~_|]).{3,100}$',
     message="La password inserita non è valida")
 
 regex_email_port = RegexValidator(

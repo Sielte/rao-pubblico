@@ -1,6 +1,14 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+
+## [1.0.15] - 06/09/2021
+
+### Fix
+
+- Modifica del limite di lunghezza della password nella configurazione SMTP.
+
+
 ## [1.0.14] - 02/08/2021
 
 ### Fix
