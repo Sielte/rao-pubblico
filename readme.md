@@ -4,18 +4,43 @@
 
 Il seguente progetto mette a disposizione dei R.A.O. pubblici una piattaforma contenente le funzionalità basilari per il processo di identificazione SPID.
 
-Per un corretto funzionamento del sistema sarà necessario configurare il Server di Firma **rao-pubblico-signer**, che avrà il compito di autorizzare tramite pin 
-le operazioni del Security Officer (Amministratore del R.A.O.) e degli operatori del R.A.O. È possibile accedere al repository di rao-pubblico-signer tramite
-il link di cui sotto:
+## Pre-requisiti
 
-``https://github.com/Sielte/rao-pubblico-signer.git``
+### Richiesta del Sigillo ad AgID
 
+Per ottenere un ambiente funzionante occorre inviare una richiesta ad AgID via PEC come mostrato nelle linee guida.
 
 ## Installazione con Docker
+
+### Avvio tramite docker-compose
+
+Viene fornito il file **docker-compose.yaml** per un avvio rapido del progetto rao-pubblico e del sign-server. 
+Per un corretto funzionamento, procedere come segue:
+
+* effettuare il git clone di questo repos.;
+* effettuare il git clone del repos. sign-server;
+  * rinominare la cartella in cui risiede il sign-server in signserver (o modificare il context del signserver all'interno del docker-compose.yaml);
+* modificare il file compose/local/rao/rao.env con le variabili d'ambiente che si desidera configurare; 
+* avviare il comando ``docker-compose up`` all'interno della cartella in cui si trova il repos. di rao-pubblico.
+
+All'interno del capitolo _Configurazione (inizializzazione dei dati)_ viene spiegato come configurare i due servizi.
+
+### Installazione tramite Dockerfile
 
 È possibile installare ed eseguire l'applicazione RAO in un container *Docker*, allo scopo è stato preparato un `Dockerfile` basato sull'immagine python:3.6.
 
 Il `Dockerfile` genera un'immagine compatibile con gli orchestratori OpenShift e Kubernetes.
+
+#### Configurazione del SignServer
+Per un corretto funzionamento del sistema sarà necessario configurare il Server di Firma **rao-pubblico-signer**, che avrà il compito di autorizzare tramite pin 
+le operazioni del Security Officer (Amministratore del R.A.O.) e degli operatori del R.A.O.
+
+È possibile accedere al repository di rao-pubblico-signer tramite il link di cui sotto:
+
+``https://github.com/Sielte/rao-pubblico-signer.git``
+
+All'interno è presente un readme che spiega come configurare correttamente il SignServer.
+
 
 ### Build dell'immagine Docker
 
@@ -56,20 +81,12 @@ Nel caso di utilizzo dell'immagine con *Docker* si consiglia di creare un *volum
 docker volume create "<nome_volume>" &> /dev/null || true
 ```
 
-Esecuzione dell'immagine (sostituire opportunamente i valori dei dati tra parentesi angolari `<...>`):
+Esecuzione dell'immagine (sostituire opportunamente i valori dei dati all'interno del file rao.env tra parentesi angolari `<...>`):
 
 ```bash
 docker run -d \
        --name "<nome_container>" \
-       -e SIGN_URL="<signURL>" \
-       -e BASE_URL="<baseURL>"
-       -e SECRET_KEY="<chiaveSegreta1>" \
-       -e DATABASE_NAME="/data/<nomedb>.sqlite3" \
-       -e MAIL_LOG_LEVEL="ERROR" \
-       -e PORTAL_LOG_LEVEL="INFO" \
-       -e AGENCY_LOG_LEVEL="INFO" \
-       -e SECRET_KEY_ENC="<chiaveSegreta2>" \
-       -e RAO_NAME="<nomeRAO>" \
+       --env-file "./compose/local/rao/rao.env" \
        --mount type=volume,source="<nome_volume>",target="/data" \
        -p "<porta>:8000" \
        "rao-app:latest"  "/start"
@@ -116,6 +133,9 @@ Un ultimo passaggio necessario per l'attivazione del proprio account comporta l'
  * conferma PIN
  * certificato 
  * chiave privata
+
+Per ottenere il PIN di Firma temporaneo, leggere il capitolo _Attivazione di un Security Officer_ del readme del signserver.
+
 
 L'utente Amministratore sarà quindi attivo: potrà raggiungere la pagina di login ed effettuare l'accesso 
 con le credenziali inserite durante il processo di attivazione.

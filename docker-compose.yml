@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  rao:
+    build:
+      context: .
+      dockerfile: ./compose/local/rao/Dockerfile
+    image: rao_pubblico
+    container_name: rao
+    volumes:
+      - type: volume
+        source: raodata
+        target: /data/
+    ports:
+      - "8000:8000"
+    networks:
+      - netwlocal
+    env_file:
+      - ./compose/local/rao/rao.env
+    command: ./start
+  signserver:
+    build:
+      context: ../signserver/
+      dockerfile: ./compose/local/signserver/Dockerfile
+    image: sign_server
+    container_name: signserver
+    volumes:
+      - type: volume
+        source: signdata
+        target: /data/
+    ports:
+      - "8003:8003"
+    networks:
+      - netwlocal
+    command: ./start
+
+networks:
+  netwlocal:
+
+volumes:
+  raodata:
+  signdata:
+

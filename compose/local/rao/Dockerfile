@@ -12,6 +12,9 @@ RUN apt-get update \
   && apt-get install -y gettext \
   # xmlsec dependencies
   && apt-get install -y libxmlsec1-dev \
+     # sqlite binaries for maintenance
+  && apt-get install -y sqlite3 \
+
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/* \
@@ -19,7 +22,7 @@ RUN apt-get update \
   && adduser --uid 1001 --no-create-home --gecos root --shell /bin/sh  --home /rao rao \
   && usermod -a -G root rao
   
-COPY ./compose/local/django/start ./compose/production/django/entrypoint /
+COPY ./compose/local/rao/start ./compose/production/rao/entrypoint /
 COPY ./rao /rao
 
 # Requirements are installed here to ensure they will be cached.

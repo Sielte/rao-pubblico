@@ -6,5 +6,5 @@
 
 python3 ./rao/manage.py makemigrations agency
 python3 ./rao/manage.py migrate
-exec python3 ./rao/manage.py runserver 0.0.0.0:8000
+python3 ./rao/manage.py runserver 0.0.0.0:8000
 
