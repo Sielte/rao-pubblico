@@ -20,7 +20,7 @@ from .classes.regex import regex_cap, regex_cie, regex_cf, regex_date, regex_ema
     regex_name, regex_password, regex_surname, regex_doc, regex_rao_name, regex_issuercode, \
     regex_pwd_email, regex_patente, regex_email_port, regex_pin, regex_dim_pin, regex_id_card_issuer
 from .utils.utils import check_ts, get_certificate, set_client_ip, calculate_age
-from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain
+from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain, check_keylength_certificate
 from .utils.utils_db import get_all_operator_cf
 
 LOG = logging.getLogger(__name__)
@@ -230,6 +230,9 @@ class ChangePinFileForm(Form):
             self.cert = None
             LOG.error("Chiave privata presente - Certificato non valido", extra=set_client_ip())
             raise ValidationError("Il certificato non deve contenere la chiave privata!")
+        if not check_keylength_certificate(self.cert):
+            LOG.error("Lunghezza chiave non conforme", extra=set_client_ip())
+            raise ValidationError("Lunghezza chiave non conforme")
         if not check_expiration_certificate(self.cert):
             LOG.error("Certificato scaduto", extra=set_client_ip())
             raise ValidationError("Certificato scaduto")
@@ -1038,6 +1041,9 @@ class CertSetupForm(Form):
             self.cert = None
             LOG.error("Chiave privata presente - Certificato non valido", extra=set_client_ip())
             raise ValidationError("Il certificato non deve contenere la chiave privata!")
+        if not check_keylength_certificate(self.cert):
+            LOG.error("Lunghezza chiave non conforme", extra=set_client_ip())
+            raise ValidationError("Lunghezza chiave non conforme")
         if not check_expiration_certificate(self.cert):
             LOG.error("Certificato scaduto", extra=set_client_ip())
             raise ValidationError("Certificato scaduto")

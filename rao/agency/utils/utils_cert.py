@@ -22,6 +22,22 @@ from rao import settings
 LOG = logging.getLogger(__name__)
 
 
+def check_keylength_certificate(cert_string):
+    """
+
+    :param cert_string:
+    :return:
+    """
+    try:
+        certificate = crypto.load_certificate(crypto.FILETYPE_PEM,cert_string)
+        public_key = certificate.get_pubkey()
+        key_length = public_key.bits()
+        if key_length==2048:
+            return True
+    except Exception as e:
+        LOG.warning('Errore su check_keylength_certificate: {}'.format(str(e)), extra=set_client_ip())
+    return False
+
 def check_expiration_certificate(cert_string):
     """
 
