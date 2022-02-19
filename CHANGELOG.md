@@ -1,6 +1,11 @@
 # Changelog
 Tutte le modifiche al progetto, nuove funzionalità e informazioni sono documentate in questo file.
 
+## [1.0.16] - 19/01/2022
+
+### Fix
+
+- La regex per il controllo del nome del R.A.O. comprende anche gli apostrofi.
 
 ## [1.0.15] - 06/09/2021
 
