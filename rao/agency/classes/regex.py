@@ -49,7 +49,7 @@ regex_cie = RegexValidator(
     message="num. di documento non valido")
 
 regex_rao_name = RegexValidator(
-    regex=r'^[A-Z]{1}[A-zÀ-ù ]{1,100}$',
+    regex=r'^[A-Z]{1}[A-zÀ-ù\' ]{1,100}$',
     message="Il primo carattere deve essere maiuscolo.")
 
 regex_issuercode = RegexValidator(
