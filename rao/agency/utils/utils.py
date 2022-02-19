@@ -15,6 +15,7 @@ from io import BytesIO
 from operator import add
 
 # Third-party app imports
+from dateutil.relativedelta import relativedelta
 from codicefiscale import codicefiscale
 from dateutil import tz
 from django.conf import settings
@@ -106,15 +107,23 @@ def verify_cf(request):
     :request: request contenente i dati del cittadino
     :return: dic con True/False
     """
+
     try:
         fiscal_code = request.POST.get('fiscalNumber').upper()
+        centenario = request.POST.get('formCentenario')
+        LOG.info(centenario)
+        if centenario == 'S':
+            data_di_nascita = (codicefiscale.decode(fiscal_code)['birthdate'] - relativedelta(years=100))
+        else:
+            data_di_nascita = codicefiscale.decode(fiscal_code)['birthdate']
+
         belfiore_code = request.POST.get('placeOfBirth') if request.POST.get('placeOfBirth') else request.POST.get(
             'nationOfBirth')
         verify_fiscal_code = {
             'familyName': fiscal_code[0:3] == codicefiscale.encode_surname(request.POST.get('familyName')),
             'name': fiscal_code[3:6] == codicefiscale.encode_name(request.POST.get('name')),
             'gender': codicefiscale.decode(fiscal_code)['sex'] == request.POST.get('gender'),
-            'dateOfBirth': codicefiscale.decode(fiscal_code)['birthdate'] == datetime.datetime.strptime(
+            'dateOfBirth': data_di_nascita == datetime.datetime.strptime(
                 request.POST.get('dateOfBirth'), '%d/%m/%Y'),
             'belfiore_code': codicefiscale.decode(fiscal_code)['raw']['birthplace'] == belfiore_code
         }
@@ -136,10 +145,6 @@ def verify_cf(request):
         }
 
     return verify_fiscal_code
-
-
-
-
 
 
 def render_to_pdf(template_src, context_dict):
@@ -507,9 +512,16 @@ def decode_fiscal_number(request):
     :return: JsonResponse con statusCode e dati (in caso di successo)
     """
     cf = request.GET.get('CF').upper()
+    centenario = request.GET.get('centenario')
     try:
         isvalid = codicefiscale.is_valid(cf) or codicefiscale.is_omocode(cf)
         decode_cf = codicefiscale.decode(cf)
+        birth_date = decode_cf['birthdate']
+        LOG.info(calculate_age(birth_date))
+        if int(centenario) == 1:
+            data_di_nascita = (decode_cf['birthdate'] - relativedelta(years=100)).strftime('%d/%m/%Y')
+        else:
+            data_di_nascita = decode_cf['birthdate'].strftime('%d/%m/%Y')
         if isvalid:
             am = AddressMunicipality.objects.filter(code__iexact=decode_cf['raw']['birthplace']).first()
             if am:
@@ -520,20 +532,22 @@ def decode_fiscal_number(request):
                                      'codeOfNation': nation_code,
                                      'placeOfBirth': '',
                                      'countyOfBirth': '',
-                                     'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
+                                     'dateOfBirth': data_di_nascita,
                                      'gender': decode_cf['sex']
                                      })
 
-            status_code_city, city = get_city_id(decode_cf['raw']['birthplace'], decode_cf['birthdate'].strftime('%Y-%m-%d'))
+            status_code_city, city = get_city_id(decode_cf['raw']['birthplace'],
+                                                 decode_cf['birthdate'].strftime('%Y-%m-%d'))
 
             if status_code_city == StatusCode.OK.value:
-
                 return JsonResponse({'statusCode': StatusCode.OK.value,
                                      'codeOfNation': nation_code,
                                      'placeOfBirth': decode_cf['raw']['birthplace'],
                                      'countyOfBirth': city,
-                                     'dateOfBirth': decode_cf['birthdate'].strftime('%d/%m/%Y'),
-                                     'gender': decode_cf['sex']
+                                     'dateOfBirth': data_di_nascita,  # decode_cf['birthdate'].strftime('%d/%m/%Y'),
+                                     'gender': decode_cf['sex'],
+                                     'age': calculate_age(birth_date)
+
                                      })
 
     except Exception as e:

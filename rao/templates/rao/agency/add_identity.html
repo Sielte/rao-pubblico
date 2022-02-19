@@ -50,18 +50,22 @@
                                             {% endif %}
 
                                             <div class="row pt-2">
-                                                <div class="col-lg-4">
+                                                <div class="form-group col-lg-2">
+                                                    <p> Centenario:</p>
+                                                    <p id="modalCentenario" class="font-weight-bold"> {% if params.user_detail.centenario == 'N' %} No {% else %} Sì {% endif %} </p>
+                                                </div>
+                                                <div class="col-lg-3">
                                                     <p>Codice fiscale:</p>
                                                     <p id="modalFiscalCode" class="font-weight-bold"> {{ params.user_detail.fiscalNumber }} </p>
                                                 </div>
 
-                                                <div class="col-lg-4">
+                                                <div class="col-lg-3">
                                                     <p>Nome:</p>
                                                     <p id="modalName" {% if params.verify_cf_dic.name %} class="font-weight-bold" {% else %}
                                                        class="font-weight-bold text-danger" {% endif %}> {{ params.user_detail.name }} </p>
                                                 </div>
 
-                                                <div class="col-lg-4">
+                                                <div class="col-lg-3">
                                                     <p>Cognome:</p>
                                                     <p id="modalSurname" {% if params.verify_cf_dic.familyName %} class="font-weight-bold" {% else %}
                                                        class="font-weight-bold text-danger" {% endif %}> {{ params.user_detail.familyName }} </p>
@@ -264,17 +268,31 @@
                 <div id="accordion1" class="collapse show" role="tabpanel" aria-labelledby="headingA1">
                     <div class="collapse-body">
                         <div class="form-row">
+                            <div class="form-group col-lg-2">
+                                <label style="margin-top:-1.5em;" for="formCentenario">Centenario*</label>
+                                <div class="bootstrap-select-wrapper">
+                                <select id="formCentenario" name="formCentenario" title="Centenario">
+                                        <option selected {% if form.formCentenario.value == 'N' %} selected {% endif %} value="N">
+                                        No
+                                        </option>
+                                        <option {% if form.formCentenario.value == 'S' %} selected {% endif %} value="S">
+                                        Sì
+                                        </option>
 
-                            <div class="form-group col-lg-4">
+                                    </select>
+                                    </div>
+                            </div>
+                            <div class="form-group col-lg-3">
                                 <input type="text" class="form-control" id="fiscalNumber" name="fiscalNumber" autocomplete="0"
                                        aria-describedby="fiscalNumberHelp" {% if form.fiscalNumber.value %}
                                        value="{{ form.fiscalNumber.value }}" {% endif %}>
                                 <label for="fiscalNumber">Codice Fiscale*</label>
                                 <small id="fiscalNumberHelp"
                                        class="form-text text-danger"> {{ form.fiscalNumber.errors }} </small>
+
                             </div>
 
-                            <div class="form-group col-lg-4 ">
+                            <div class="form-group col-lg-3 ">
                                 <input type="text" class="form-control" id="name" name="name" autocomplete="0"
                                        aria-describedby="nameHelp" {% if form.name.value %}
                                        value="{{ form.name.value }}" {% endif %}>
@@ -702,6 +720,7 @@
         data_addressNation_value = '{{ form.addressNation.value }}'
         data_addressCountry_value = '{{ form.addressCountry.value }}'
         data_addressMunicipality_value = '{{ form.addressMunicipality.value }}'
+        data_formCentenario_value = '{{ form.formCentenario.value }}'
         data_cf_verification = {% if params.verify_cf_dic.status_code != 200 %}true{% else %}false{% endif %}
         {% endif %}
         src="{% static "rao/agency/js/add_identity.js" %}?20210118"></script>
@@ -710,8 +729,10 @@
 function enable_autopopulate_fields() {
     document.getElementById("dateOfBirth").disabled = false;
     document.getElementById("gender").disabled = false;
+    document.getElementById("formCentenario").disabled = false;
 }
 </script>
 
 {% endblock %}
 
+<!-- '{% if form.age_checkbox.value %}true{% else %}false{% endif %}' -->

@@ -13,11 +13,12 @@ $(document).ready(function () {
 input_CF = document.getElementById("fiscalNumber");
 input_CF.addEventListener('focusout', function () {
 CF = this.value;
-
+centenario=(document.getElementById("formCentenario").value=="S") ? 1 : 0;
 $.ajax({
     url: '/agency/ajax_decode_fiscal_number/',
     data: {
-        'CF': CF
+        'CF': CF,
+        'centenario': centenario
     },
     success: function (data) {
         if (data["statusCode"] == 200) {
@@ -67,6 +68,7 @@ window.addEventListener('load', function () {
             if (is_form) {
 
                 $('#nationOfBirth').selectpicker('refresh');
+                formCentenario_value = script_tag.getAttribute("data_formCentenario_value");
                 dateOfBirth_value = document.getElementById("dateOfBirth").value;
                 nationOfBirth_value = script_tag.getAttribute("data_nationOfBirth_value");
                 countyOfBirth_value = script_tag.getAttribute("data_countyOfBirth_value");
@@ -76,7 +78,6 @@ window.addEventListener('load', function () {
                 addressMunicipality_value = script_tag.getAttribute("data_addressMunicipality_value");
                 set_birth_after_form('nationOfBirth', 'countyOfBirth', 'placeOfBirth', nationOfBirth_value,
                  countyOfBirth_value, placeOfBirth_value, date_format_change(dateOfBirth_value), is_form);
-
                 set_birth_after_form('addressNation', 'addressCountry', 'addressMunicipality', addressNation_value,
                  addressCountry_value, addressMunicipality_value, '', is_form);
             }

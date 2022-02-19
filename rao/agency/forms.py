@@ -3,7 +3,7 @@
 import logging
 import re
 from datetime import datetime
-
+from dateutil.relativedelta import relativedelta
 from OpenSSL import crypto
 # Third-party app imports
 from codicefiscale import codicefiscale
@@ -13,14 +13,16 @@ from django.forms import CharField, Form, PasswordInput, TextInput, ValidationEr
     FileInput
 
 # Imports from your apps
-from .classes.choices import CARD_TYPE, ADDRESS_TYPE, CHOICE_SEX, ISSUER_TYPE, get_choices_address_nation, \
+from .classes.choices import CARD_TYPE, ADDRESS_TYPE, CHOICE_SEX, CHOICE_CENTENARIO, ISSUER_TYPE, \
+    get_choices_address_nation, \
     get_choices_address_city, get_choices_address_municipality, get_choices_prefix, \
     get_choices_cryptotag, StatusCode
 from .classes.regex import regex_cap, regex_cie, regex_cf, regex_date, regex_email, regex_number, \
     regex_name, regex_password, regex_surname, regex_doc, regex_rao_name, regex_issuercode, \
     regex_pwd_email, regex_patente, regex_email_port, regex_pin, regex_dim_pin, regex_id_card_issuer
 from .utils.utils import check_ts, get_certificate, set_client_ip, calculate_age
-from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain, check_keylength_certificate
+from .utils.utils_cert import verify_policy_certificate, check_expiration_certificate, verify_certificate_chain, \
+    check_keylength_certificate
 from .utils.utils_db import get_all_operator_cf
 
 LOG = logging.getLogger(__name__)
@@ -353,7 +355,9 @@ class NewOperatorForm(Form):
             else:
                 raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
         except Exception as e:
-            LOG.warning("{} - Codice fiscale non corrisponde con dati anagrafici".format(self.cleaned_data.get('fiscalNumber')), extra=set_client_ip())
+            LOG.warning(
+                "{} - Codice fiscale non corrisponde con dati anagrafici".format(self.cleaned_data.get('fiscalNumber')),
+                extra=set_client_ip())
             raise ValidationError("Il codice fiscale non corrisponde con i dati inseriti")
 
 
@@ -587,6 +591,12 @@ class NewIdentityForm(Form):
         required=True,
         error_messages={'required': 'Campo obbligatorio!'},
         validators=[regex_date])
+
+    # formCentenario = CharField(widget=TextInput(attrs={'id': 'formCentenario', 'name': 'formCentenario'}),
+    #                           required=False)
+    formCentenario = ChoiceField(widget=Select(attrs={'id': 'formCentenario', 'name': 'formCentenario'}),
+                                 required=False,
+                                 choices=CHOICE_CENTENARIO)
 
     def clean_addressCountry(self):
         addressNation = self.cleaned_data.get('addressNation')
@@ -878,6 +888,10 @@ class NewIdentityPinForm(Form):
                          error_messages={'required': 'Campo obbligatorio!'},
                          validators=[regex_dim_pin])
 
+    formCentenario = ChoiceField(widget=Select(attrs={'id': 'formCentenario', 'name': 'formCentenario'}),
+                                 required=False,
+                                 choices=CHOICE_CENTENARIO)
+
     def clean_addressCountry(self):
         addressNation = self.cleaned_data.get('addressNation')
         addressCountry = self.cleaned_data.get('addressCountry')
@@ -974,7 +988,6 @@ class NewIdentityPinForm(Form):
         if not is_valid:
             raise ValidationError("Numero di documento non valido!")
         return
-
 
     issue_date = None
 

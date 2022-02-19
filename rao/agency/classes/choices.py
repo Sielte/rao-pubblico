@@ -9,6 +9,10 @@ CHOICE_SEX = (
     ('M', 'M'),
     ('F', 'F'),
 )
+CHOICE_CENTENARIO = (
+    ('S', 'S'),
+    ('N', 'N'),
+)
 
 ADDRESS_TYPE = (
     ('Via', 'Via'),

@@ -32,7 +32,9 @@ class UserDetail:
 
         self.gender = identity.get('gender')
         self.pec = re.sub(r"[\n\t\s]*", "", identity.get('formPEC')) if identity.get('formPEC') != '' else None
-
+        ####
+        self.centenario = re.sub(r"[\n\t\s]*", "", identity.get('formCentenario')) if identity.get('formCentenario') != '' else None
+        ####
         self.countryCallingCode = identity.get('countryCallingCode')
         self.phoneNumber = re.sub(r"[\n\t\s]*", "", identity.get('phoneNumber'))
 
