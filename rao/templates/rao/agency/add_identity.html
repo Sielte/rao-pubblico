@@ -52,7 +52,7 @@
                                             <div class="row pt-2">
                                                 <div class="form-group col-lg-2">
                                                     <p> Centenario:</p>
-                                                    <p id="modalCentenario" class="font-weight-bold"> {% if params.user_detail.centenario == 'N' %} No {% else %} Sì {% endif %} </p>
+                                                    <p id="modalCentenario" class="font-weight-bold"> {% if params.user_detail.formCentenario == 'N' %} No {% else %} Sì {% endif %} </p>
                                                 </div>
                                                 <div class="col-lg-3">
                                                     <p>Codice fiscale:</p>
@@ -269,7 +269,7 @@
                     <div class="collapse-body">
                         <div class="form-row">
                             <div class="form-group col-lg-2">
-                                <label style="margin-top:-1.5em;" for="formCentenario">Centenario*</label>
+                                <label style="margin-top:-1.5em;" for="formCentenario">Centenario</label>
                                 <div class="bootstrap-select-wrapper">
                                 <select id="formCentenario" name="formCentenario" title="Centenario">
                                         <option selected {% if form.formCentenario.value == 'N' %} selected {% endif %} value="N">

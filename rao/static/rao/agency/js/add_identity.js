@@ -13,7 +13,7 @@ $(document).ready(function () {
 input_CF = document.getElementById("fiscalNumber");
 input_CF.addEventListener('focusout', function () {
 CF = this.value;
-centenario=(document.getElementById("formCentenario").value=="S") ? 1 : 0;
+centenario=document.getElementById("formCentenario").value;
 $.ajax({
     url: '/agency/ajax_decode_fiscal_number/',
     data: {

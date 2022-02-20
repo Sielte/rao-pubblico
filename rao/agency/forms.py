@@ -592,8 +592,6 @@ class NewIdentityForm(Form):
         error_messages={'required': 'Campo obbligatorio!'},
         validators=[regex_date])
 
-    # formCentenario = CharField(widget=TextInput(attrs={'id': 'formCentenario', 'name': 'formCentenario'}),
-    #                           required=False)
     formCentenario = ChoiceField(widget=Select(attrs={'id': 'formCentenario', 'name': 'formCentenario'}),
                                  required=False,
                                  choices=CHOICE_CENTENARIO)
@@ -628,10 +626,15 @@ class NewIdentityForm(Form):
 
     def clean_fiscalNumber(self):
         fiscalNumber = self.cleaned_data.get('fiscalNumber').upper()
+        centenario = self.data.get('formCentenario')
         message = "Il codice fiscale inserito non è valido"
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
-            birth_date = codicefiscale.decode(fiscalNumber)['birthdate']
+            if centenario == 'S':
+                birth_date = codicefiscale.decode(fiscalNumber)['birthdate'] - relativedelta(years=100)
+            else:
+                birth_date = codicefiscale.decode(fiscalNumber)['birthdate']
+
             if isvalid and calculate_age(birth_date) < 18:
                 isvalid = False
                 message = "Il codice fiscale inserito deve appartenere ad un maggiorenne"
@@ -928,10 +931,14 @@ class NewIdentityPinForm(Form):
 
     def clean_fiscalNumber(self):
         fiscalNumber = self.cleaned_data.get('fiscalNumber').upper()
+        centenario = self.data.get('formCentenario')
         message = "Il codice fiscale inserito non è valido"
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
-            birth_date = codicefiscale.decode(fiscalNumber)['birthdate']
+            if centenario == 'S':
+                birth_date = codicefiscale.decode(fiscalNumber)['birthdate'] - relativedelta(years=100)
+            else:
+                birth_date = codicefiscale.decode(fiscalNumber)['birthdate']
             if isvalid and calculate_age(birth_date) < 18:
                 isvalid = False
                 message = "Il codice fiscale inserito deve appartenere ad una persona maggiorenne"
