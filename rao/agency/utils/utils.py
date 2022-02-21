@@ -517,7 +517,6 @@ def decode_fiscal_number(request):
         isvalid = codicefiscale.is_valid(cf) or codicefiscale.is_omocode(cf)
         decode_cf = codicefiscale.decode(cf)
         birth_date = decode_cf['birthdate']
-        LOG.info(calculate_age(birth_date))
         if centenario == 'S':
             data_di_nascita = (decode_cf['birthdate'] - relativedelta(years=100)).strftime('%d/%m/%Y')
         else:

@@ -928,10 +928,12 @@ class NewIdentityPinForm(Form):
         if nationOfBirth == 'Z000' and not placeOfBirth:
             raise ValidationError("Campo obbligatorio!")
         return
+    def clean_formCentenario(self):
+        formCentenario = self.cleaned_data.get('formCentenario')
 
     def clean_fiscalNumber(self):
-        fiscalNumber = self.cleaned_data.get('fiscalNumber').upper()
-        centenario = self.data.get('formCentenario')
+        fiscalNumber = self.cleaned_data.get('fiscalNumber', '').upper()
+        centenario = self.cleaned_data.get('formCentenario')
         message = "Il codice fiscale inserito non è valido"
         try:
             isvalid = codicefiscale.is_valid(fiscalNumber) or codicefiscale.is_omocode(fiscalNumber)
