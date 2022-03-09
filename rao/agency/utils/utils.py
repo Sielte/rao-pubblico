@@ -4,7 +4,10 @@ import base64
 import datetime
 import hashlib
 import json
-
+# -----------------------------------------------------------------------------------------
+import requests
+import xml.etree.ElementTree as ET
+# -----------------------------------------------------------------------------------------
 import jwt
 import logging
 import re
@@ -506,6 +509,38 @@ def get_city_id(municipality_value, bith_date):
         return StatusCode.EXC.value, None
 
 
+# -----------------------------------------------------------------------------------------
+def retrieve_sad_data(cf):
+    """
+    Ricerca dati di residenza nel db locale attraverso il servizio SAD locale
+    :param cf: Codice fiscale
+    :return: nome, cognome e dati di residenza
+    """
+    data = ''
+    try:
+        query = 'IDATIANAG.XML   62      FOTO.PNG       0       FIRMA.PNG      0       AD USO FUTURO  0       ' \
+                '<Query><Query><CodFiscale>' + cf + '</CodFiscale></Query> '
+        response = requests.post(settings.SAD_URL, query)
+        #LOG.debug(response.status_code)
+        if response.status_code == 200:
+            root = ET.fromstring(response.content)
+            risultato = root[0][0].text  # restituisce -1 in caso negativo, 1 in caso positivo
+            if risultato == "1":
+                data = {
+                    'cognome': root[1][0][0].text.strip(),
+                    'nome': root[1][0][1].text.strip(),
+                    'dug': root[1][0][8][0].text.strip().capitalize(),
+                    # prima lettera maiuscola per mapparlo con i valori enum di choices.py
+                    'indirizzo': root[1][0][8][1].text.strip(),
+                    'nciv': root[1][0][8][2].text.strip(),
+                    'cap': root[1][0][8][3].text.strip()
+                }
+
+    except Exception as e:
+        LOG.warning("Exception: {}".format(str(e)))
+    return data
+
+
 def decode_fiscal_number(request):
     """
     Estrae i dati a partire dal codice fiscale
@@ -517,6 +552,10 @@ def decode_fiscal_number(request):
         isvalid = codicefiscale.is_valid(cf) or codicefiscale.is_omocode(cf)
         decode_cf = codicefiscale.decode(cf)
         birth_date = decode_cf['birthdate']
+        # -----------------------------------------------------------------------------------------
+        user_data = retrieve_sad_data(cf)
+        # -----------------------------------------------------------------------------------------
+
         if centenario == 'S':
             data_di_nascita = (decode_cf['birthdate'] - relativedelta(years=100)).strftime('%d/%m/%Y')
         else:
@@ -527,18 +566,38 @@ def decode_fiscal_number(request):
                 nation_code = 'Z000'
             else:
                 nation_code = decode_cf['raw']['birthplace']
-                return JsonResponse({'statusCode': StatusCode.OK.value,
-                                     'codeOfNation': nation_code,
-                                     'placeOfBirth': '',
-                                     'countyOfBirth': '',
-                                     'dateOfBirth': data_di_nascita,
-                                     'gender': decode_cf['sex']
-                                     })
+                # -----------------------------------------------------------------------------------------
+                if user_data != "":
+                    return JsonResponse({'statusCode': StatusCode.OK.value,
+                                         'codeOfNation': nation_code,
+                                         'placeOfBirth': '',
+                                         'countyOfBirth': '',
+                                         'dateOfBirth': data_di_nascita,
+                                         'gender': decode_cf['sex'],
+                                         'name': user_data['nome'],
+                                         'familyName': user_data['cognome'],
+                                         'addressType': user_data['dug'],
+                                         'addressName': user_data['indirizzo'],
+                                         'addressNumber': user_data['nciv'],
+                                         'addressPostalCode': user_data['cap'],
+                                         'addressNation': 'Z000',
+                                         'addressCountry': 'TV',
+                                         'addressMunicipality': 'H022'
+                                         })
+                else:
+                    # -----------------------------------------------------------------------------------------
+                    return JsonResponse({'statusCode': StatusCode.OK.value,
+                                         'codeOfNation': nation_code,
+                                         'placeOfBirth': '',
+                                         'countyOfBirth': '',
+                                         'dateOfBirth': data_di_nascita,
+                                         'gender': decode_cf['sex']
+                                         })
 
             status_code_city, city = get_city_id(decode_cf['raw']['birthplace'],
                                                  decode_cf['birthdate'].strftime('%Y-%m-%d'))
 
-            if status_code_city == StatusCode.OK.value:
+            if status_code_city == StatusCode.OK.value and user_data == '':
                 return JsonResponse({'statusCode': StatusCode.OK.value,
                                      'codeOfNation': nation_code,
                                      'placeOfBirth': decode_cf['raw']['birthplace'],
@@ -546,9 +605,25 @@ def decode_fiscal_number(request):
                                      'dateOfBirth': data_di_nascita,  # decode_cf['birthdate'].strftime('%d/%m/%Y'),
                                      'gender': decode_cf['sex'],
                                      'age': calculate_age(birth_date)
-
                                      })
-
+            if status_code_city == StatusCode.OK.value and user_data != '':
+                return JsonResponse({'statusCode': StatusCode.OK.value,
+                                     'codeOfNation': nation_code,
+                                     'placeOfBirth': decode_cf['birthplace']['code'],
+                                     'countyOfBirth': city,
+                                     'dateOfBirth': data_di_nascita,
+                                     'gender': decode_cf['sex'],
+                                     'name': user_data['nome'],
+                                     'familyName': user_data['cognome'],
+                                     'addressType': user_data['dug'],
+                                     'addressName': user_data['indirizzo'],
+                                     'addressNumber': user_data['nciv'],
+                                     'addressPostalCode': user_data['cap'],
+                                     'addressNation': 'Z000',
+                                     'addressCountry': 'TV',
+                                     'addressMunicipality': 'H022'
+                                     })
+                # -----------------------------------------------------------------------------------------
     except Exception as e:
         LOG.warning("Exception: {}".format(str(e)), extra=set_client_ip(request))
         return JsonResponse({'statusCode': StatusCode.EXC.value})

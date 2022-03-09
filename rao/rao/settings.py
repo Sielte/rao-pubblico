@@ -172,6 +172,7 @@ SESSION_COOKIE_AGE = 60 * SESSION_MINUTES
 BASE_URL = os.environ.get('BASE_URL', 'http://your-ip:port/')
 
 #SIGN_URL: endpoint del Sistema di Firma
+SAD_URL = os.environ.get('SAD_URL', 'http://your-ip:port/')
 SIGN_URL = os.environ.get('SIGN_URL', 'http://your-ip:port/')
 LOGIN_URL = BASE_URL + 'agency'
 TEMPLATE_URL_MAIL = 'rao/mail/'

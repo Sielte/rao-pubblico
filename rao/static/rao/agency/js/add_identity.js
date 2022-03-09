@@ -27,6 +27,28 @@ $.ajax({
             document.getElementById("gender").value = data["gender"];
             $('#gender').selectpicker('refresh');
             document.getElementById('dateOfBirth').value = data["dateOfBirth"];
+             //-----------------------------------------------------------------------------
+            //document.getElementById('addressType').value = data["addressType"]; //select
+            if(data["name"]!=undefined) {
+                $('select[id=addressType]').selectpicker('val', data["addressType"]);
+                $('#addressType').selectpicker('refresh');
+                document.getElementById('addressName').value = data["addressName"]; //text
+                $('#addressName').change();
+                document.getElementById('name').value = data["name"]; //text
+                $('#name').change();
+                document.getElementById('familyName').value = data["familyName"]; //text
+                $('#familyName').change();
+                document.getElementById('addressNumber').value = data["addressNumber"]; //text
+                $('#addressNumber').change();
+                document.getElementById('addressPostalCode').value = data["addressPostalCode"]; //text
+                $('#addressPostalCode').change();
+
+                $('select[id=countryCallingCode]').selectpicker('val', data["countryCallingCode"]);
+                $('#countryCallingCode').selectpicker('refresh');
+
+                set_address_after_form('addressNation', 'addressCountry', 'addressMunicipality', 'Z000', data["addressCountry"], data["addressMunicipality"]);
+            }
+            //-----------------------------------------------------------------------------
         }
     }
 });
@@ -84,6 +106,8 @@ window.addEventListener('load', function () {
             else {
                 $('#nationOfBirth').selectpicker('destroy');
                 $('#nationOfBirth').selectpicker('render');
+                $('#addressNation').selectpicker('destroy');
+                $('#addressNation').selectpicker('render');
             }
 
         }
@@ -127,7 +151,49 @@ window.addEventListener('load', function () {
     });
 
 });
+//-----------------------------------------------------------------------------------------
+function set_address_after_form(nation, city, municipality, nation_value, city_value, municipality_value) {
 
+    document.getElementById(nation).value = nation_value;
+    $('#' + nation).selectpicker('refresh');
+
+    var url = document.getElementById("add_identity_form").getAttribute("data-url");
+    var code = document.getElementById(nation).value;
+    if (code != 'Z000') {
+        toggle_disable_select(city);
+        toggle_disable_select(municipality);
+
+    } else {
+        $.ajax({
+            url: url,
+            data: {
+                'code': code,
+                'select': city
+            },
+            success: function (data) {
+                document.getElementById(city).innerHTML = data;
+                $("#" + city).selectpicker('refresh');
+                code = '';
+                document.getElementById(city).value = city_value;
+                $("#" + city).selectpicker('refresh');
+                $.ajax({
+                    url: url,
+                    data: {
+                        'code': city_value,
+                        'select': municipality
+                    },
+                    success: function (data) {
+                        document.getElementById(municipality).innerHTML = data;
+                        $("#" + municipality).selectpicker('refresh');
+                        document.getElementById(municipality).value = municipality_value;
+                        $("#" + municipality).selectpicker('refresh');
+                    }
+                });
+            }
+        });
+    }
+}
+//-----------------------------------------------------------------------------------------
 function set_birth_after_form(nation, city, municipality, nation_value, city_value, municipality_value, birth_date, is_form) {
 
     document.getElementById(nation).value = nation_value;
