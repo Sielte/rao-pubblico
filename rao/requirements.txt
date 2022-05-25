@@ -5,7 +5,7 @@ python-codicefiscale==0.3.7
 xhtml2pdf==0.2.4
 Werkzeug==1.0.1
 jwcrypto==0.7
-PyJWT==1.7.1
+PyJWT==2.4.0
 pyOpenSSL==19.1.0
 python3-saml==1.9.0
 requests==2.24.0
